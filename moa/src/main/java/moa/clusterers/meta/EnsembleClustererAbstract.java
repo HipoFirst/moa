@@ -5,13 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 import com.github.javacliparser.FileOption;
-import com.github.javacliparser.FloatOption;
-import com.github.javacliparser.IntOption;
-import com.github.javacliparser.ListOption;
-import com.github.javacliparser.Option;
-import com.github.javacliparser.Options;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.DenseInstance;
@@ -21,7 +17,6 @@ import moa.classifiers.meta.AdaptiveRandomForestRegressor;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
-import moa.clusterers.denstream.WithDBSCAN;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.SilhouetteCoefficient;
@@ -34,6 +29,8 @@ import moa.tasks.TaskMonitor;
 class ParameterSettings {
 	public String parameter;
 	public double value;
+	public double min;
+	public double max;
 }
 
 class AlgorithmSettings {
@@ -125,6 +122,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		}
 //		attributes.add(new Attribute("class1"));
 
+		evaluatePerformance(silh, attributes);
+		
+		System.out.println("Clusterer " + this.bestModel + " is the active clusterer.");
+
+
+		predictConfiguration(silh, attributes);
+	}
+	
+	protected void evaluatePerformance(SilhouetteCoefficient silh, ArrayList<Attribute> attributes) {
 		double maxVal = -1 * Double.MAX_VALUE;
 		for (int i = 0; i < this.ensemble.length; i++) {
 			// get current macro clusters
@@ -133,7 +139,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// evaluate clustering using silhouette width
 			silh.evaluateClustering(result, null, windowPoints);
 			double performance = silh.getLastValue(0);
-			System.out.println("Result " + this.ensemble[i].getCLICreationString(Clusterer.class) + ":\t" + performance);
+			System.out.println(this.ensemble[i].getCLICreationString(Clusterer.class) + ":\t => \t Silhouette: " + performance);
 //				System.out.println(ClassOption.stripPackagePrefix(this.ensemble[i].getClass().getName(), Clusterer.class)); // print class
 //				System.out.println(this.ensemble[i].getOptions().getAsCLIString()); // print non-default options
 
@@ -160,26 +166,34 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// train adaptive random forest regressor based on performance of model
 			this.ARFreg.trainOnInstanceImpl(inst);
 		}
-		System.out.println("Clusterer " + this.bestModel + " is the active clusterer.");
-
-
-		tryNewConfiguration(silh, attributes);
 	}
-	
-	protected void tryNewConfiguration(SilhouetteCoefficient silh, ArrayList<Attribute> attributes) {
-		// predict performance of new configuration
-		double[] vals = { 0.07, 0.3}; // TODO adding a dummy class for now because it crashes otherwise
+
+	// predict performance of new configuration
+	protected void predictConfiguration(SilhouetteCoefficient silh, ArrayList<Attribute> attributes) {
+
+// Integer and ordinal: round(rtnorm(1, mean + 0.5, stdDev, lowerBound, upperBound + 1) - 0.5)
+// real: round(rtnorm(1, mean, stdDev, lowerBound, upperBound), digits)
+// categorical: sample(x = possibleValues, size = 1, prob = probVector)
+		
+		// sample new configuration using truncated normal distribution 
+		ArrayList<Double> silhs = silh.getAllValues(0);
+		int parentIdx = sampleProportionally(silhs);
+		System.out.println("Selected Configuration " + parentIdx + " as parent: "+ this.ensemble[parentIdx].getCLICreationString(Clusterer.class));
+		double[] vals = new double[this.settings.algorithms[parentIdx].parameters.length];
+		for(int i=0; i<this.settings.algorithms[parentIdx].parameters.length; i++) {
+			TruncatedNormal trncnormal = new TruncatedNormal(0, 1, this.settings.algorithms[parentIdx].parameters[0].min, this.settings.algorithms[parentIdx].parameters[0].max);
+			vals[i] = trncnormal.sample();
+		}
 		Instance newInst = new DenseInstance(1.0, vals);
 		Instances newDataset = new Instances(null, attributes, 0);
 		newDataset.setClassIndex(newDataset.numAttributes());
 		newInst.setDataset(newDataset);
 
 		double prediction = this.ARFreg.getVotesForInstance(newInst)[0];
-		System.out.println("-> Prediction " + Arrays.toString(vals) + ":\t" + prediction);
+		System.out.println("Predict " + Arrays.toString(vals) + ":\t => \t Silhouette: " + prediction);
 		
 		// if we found a promising solution
 		if(prediction > silh.getMinValue(0)){
-			ArrayList<Double> silhs = silh.getAllValues(0);
 			// replace by sampling proportionally
 			int replaceIdx = sampleProportionally(silhs);
 			System.out.println("New Configuration appears to be promising! Replace configuration: " + replaceIdx);
@@ -188,7 +202,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			for(int j=0; j<vals.length-1; j++) {
 				this.settings.algorithms[replaceIdx].parameters[j].value = vals[j];
 			}
-			
+				
 			// construct CLI string
 			StringBuilder commandLine = new StringBuilder();
 			commandLine.append(this.settings.algorithms[replaceIdx].algorithm); // add algorithm class
