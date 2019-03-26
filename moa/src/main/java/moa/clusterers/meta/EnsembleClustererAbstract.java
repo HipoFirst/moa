@@ -31,6 +31,7 @@ class ParameterSettings {
 	public double value;
 	public double min;
 	public double max;
+	public String type;
 }
 
 class AlgorithmSettings {
@@ -40,7 +41,8 @@ class AlgorithmSettings {
 
 class GeneralSettings {
 	public int windowSize;
-	public AlgorithmSettings[] algorithms; // TODO we could make this an arraylist and fill more solutions in
+	public int ensembleSize;
+	public AlgorithmSettings[] algorithms;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -175,14 +177,20 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 // real: round(rtnorm(1, mean, stdDev, lowerBound, upperBound), digits)
 // categorical: sample(x = possibleValues, size = 1, prob = probVector)
 		
-		// sample new configuration using truncated normal distribution 
+		// sample parent configuration
 		ArrayList<Double> silhs = silh.getAllValues(0);
 		int parentIdx = sampleProportionally(silhs);
 		System.out.println("Selected Configuration " + parentIdx + " as parent: "+ this.ensemble[parentIdx].getCLICreationString(Clusterer.class));
+		
+		// sample new configuration using truncated normal distribution 
 		double[] vals = new double[this.settings.algorithms[parentIdx].parameters.length];
 		for(int i=0; i<this.settings.algorithms[parentIdx].parameters.length; i++) {
-			TruncatedNormal trncnormal = new TruncatedNormal(0, 1, this.settings.algorithms[parentIdx].parameters[0].min, this.settings.algorithms[parentIdx].parameters[0].max);
-			vals[i] = trncnormal.sample();
+			
+			if(this.settings.algorithms[parentIdx].parameters[i].type.equals("numeric")) {
+				TruncatedNormal trncnormal = new TruncatedNormal(0, 1, this.settings.algorithms[parentIdx].parameters[i].min, this.settings.algorithms[parentIdx].parameters[i].max);
+				vals[i] = trncnormal.sample();
+			}
+			
 		}
 		Instance newInst = new DenseInstance(1.0, vals);
 		Instances newDataset = new Instances(null, attributes, 0);
