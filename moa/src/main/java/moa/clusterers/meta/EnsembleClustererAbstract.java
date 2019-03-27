@@ -5,8 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
-
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.Attribute;
@@ -32,6 +30,7 @@ class ParameterSettings {
 	public double min;
 	public double max;
 	public String type;
+	public double std;
 }
 
 class AlgorithmSettings {
@@ -176,18 +175,25 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 // Integer and ordinal: round(rtnorm(1, mean + 0.5, stdDev, lowerBound, upperBound + 1) - 0.5)
 // real: round(rtnorm(1, mean, stdDev, lowerBound, upperBound), digits)
 // categorical: sample(x = possibleValues, size = 1, prob = probVector)
+
+// std: newProbVector <- probVector[1] * ((1 / nbNewConfigurations)^(1 / parameters$nbVariable))
 		
 		// sample parent configuration
 		ArrayList<Double> silhs = silh.getAllValues(0);
 		int parentIdx = sampleProportionally(silhs);
-		System.out.println("Selected Configuration " + parentIdx + " as parent: "+ this.ensemble[parentIdx].getCLICreationString(Clusterer.class));
+		System.out.println("Selected Configuration " + parentIdx + " as parent: " + this.ensemble[parentIdx].getCLICreationString(Clusterer.class));
 		
 		// sample new configuration using truncated normal distribution 
 		double[] vals = new double[this.settings.algorithms[parentIdx].parameters.length];
 		for(int i=0; i<this.settings.algorithms[parentIdx].parameters.length; i++) {
 			
 			if(this.settings.algorithms[parentIdx].parameters[i].type.equals("numeric")) {
-				TruncatedNormal trncnormal = new TruncatedNormal(0, 1, this.settings.algorithms[parentIdx].parameters[i].min, this.settings.algorithms[parentIdx].parameters[i].max);
+				double mean = this.settings.algorithms[parentIdx].parameters[i].value;
+				double std = this.settings.algorithms[parentIdx].parameters[i].std;
+				double lb = this.settings.algorithms[parentIdx].parameters[i].min;
+				double ub = this.settings.algorithms[parentIdx].parameters[i].max;
+				System.out.println("Sample based on mean: " + mean + ", std: " + std + ", lb: " + lb + ", ub: " + ub);
+				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
 				vals[i] = trncnormal.sample();
 			}
 			
