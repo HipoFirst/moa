@@ -9,7 +9,7 @@ public class EnsembleClustererBlast extends EnsembleClustererAbstract{
 	
 	@Override
 	public Clustering getClusteringResult() {
-		return this.ensemble[this.bestModel].getClusteringResult(); // TODO we could also return micro clusters here
+		return this.ensemble.get(this.bestModel).clusterer.getClusteringResult(); // TODO we could also return micro clusters here
 	}
 
 	

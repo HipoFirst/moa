@@ -17,8 +17,8 @@ public class EnsembleClusterer extends EnsembleClustererAbstract{
 		Clustering ensembleClustering = new Clustering(); // create empty clustering
 		
 		// get micro clusters for all ensembles
-		for (int i = 0; i < this.ensemble.length; i++) {
-			Clustering clustering = this.ensemble[i].getMicroClusteringResult();
+		for (int i = 0; i < this.ensemble.size(); i++) {
+			Clustering clustering = this.ensemble.get(i).clusterer.getMicroClusteringResult();
 			AutoExpandVector<Cluster> clusters = clustering.getClustering(); 
 			// and concatenate them to a single cluster
 			for (int j = 0; j < clusters.size(); j++) {

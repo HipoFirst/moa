@@ -1,6 +1,6 @@
 {
 	"windowSize": 5000,
-	"ensembleSize": 10,
+	"ensembleSize": 5,
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",

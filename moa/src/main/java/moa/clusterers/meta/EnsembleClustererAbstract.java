@@ -31,11 +31,54 @@ class ParameterSettings {
 	public double max;
 	public String type;
 	public double std;
+
+	public void prepareForUse(){
+		this.std = (this.max - this.min) / 2;
+	}
+
+	public ParameterSettings(ParameterSettings x){
+		this.parameter = x.parameter;
+		this.value = x.value;
+		this.min = x.min;
+		this.max = x.max;
+		this.type = x.type;
+		this.std = x.std;
+	}
 }
 
 class AlgorithmSettings {
 	public String algorithm;
 	public ParameterSettings[] parameters;
+	public Clusterer clusterer;
+
+	public void prepareForUse(){
+		// construct CLI string
+		StringBuilder commandLine = new StringBuilder();
+		commandLine.append(this.algorithm); // add algorithm class
+		for (ParameterSettings option : this.parameters) {
+			commandLine.append(" ");
+			commandLine.append("-" + option.parameter); // as well as all parameters
+			commandLine.append(" " + option.value);
+		}
+		System.out.println("Initialise: " + commandLine.toString());
+
+		// create new clusterer from CLI string
+		ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
+		this.clusterer = (Clusterer) opt.materializeObject(null, null);
+		this.clusterer.prepareForUse();
+
+		for(ParameterSettings parameter : this.parameters){
+			parameter.prepareForUse();
+		}
+	}
+
+	public AlgorithmSettings(AlgorithmSettings x){
+		this.algorithm = x.algorithm;
+		this.parameters = new ParameterSettings[x.parameters.length];
+		for(int i=0; i < x.parameters.length; i++){
+			this.parameters[i] = new ParameterSettings(x.parameters[i]);
+		}
+	}
 }
 
 class GeneralSettings {
@@ -49,8 +92,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	private static final long serialVersionUID = 1L;
 
 	int instancesSeen;
-	protected Clusterer[] ensemble;
+	int currentEnsembleSize;
 	int bestModel;
+	ArrayList<AlgorithmSettings> ensemble;
 	ArrayList<DataPoint> windowPoints;
 	AdaptiveRandomForestRegressor ARFreg;
 	GeneralSettings settings;
@@ -88,8 +132,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.ARFreg = new AdaptiveRandomForestRegressor(); // create regressor
 		this.ARFreg.prepareForUse();
 
-		for (int i = 0; i < this.ensemble.length; i++) {
-			this.ensemble[i].resetLearning();
+		for (int i = 0; i < this.ensemble.size(); i++) {
+			this.ensemble.get(i).clusterer.resetLearning();
 		}
 	}
 
@@ -100,8 +144,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.instancesSeen++;
 
 		// train all models
-		for (int i = 0; i < this.ensemble.length; i++) {
-			this.ensemble[i].trainOnInstance(inst);
+		for (int i = 0; i < this.ensemble.size(); i++) {
+			this.ensemble.get(i).clusterer.trainOnInstance(inst);
 		}
 
 		// every windowSize we update the configurations
@@ -133,14 +177,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	
 	protected void evaluatePerformance(SilhouetteCoefficient silh, ArrayList<Attribute> attributes) {
 		double maxVal = -1 * Double.MAX_VALUE;
-		for (int i = 0; i < this.ensemble.length; i++) {
+		for (int i = 0; i < this.ensemble.size(); i++) {
 			// get current macro clusters
-			Clustering result = this.ensemble[i].getClusteringResult();
+			Clustering result = this.ensemble.get(i).clusterer.getClusteringResult();
 
 			// evaluate clustering using silhouette width
 			silh.evaluateClustering(result, null, windowPoints);
 			double performance = silh.getLastValue(0);
-			System.out.println(this.ensemble[i].getCLICreationString(Clusterer.class) + ":\t => \t Silhouette: " + performance);
+			System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class) + ":\t => \t Silhouette: " + performance);
 //				System.out.println(ClassOption.stripPackagePrefix(this.ensemble[i].getClass().getName(), Clusterer.class)); // print class
 //				System.out.println(this.ensemble[i].getOptions().getAsCLIString()); // print non-default options
 
@@ -151,9 +195,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			}
 			
 			// create new instance based on settings and performance to train regressor
-			double[] params = new double[this.settings.algorithms[i].parameters.length+1];
-			for(int j=0; j<this.settings.algorithms[i].parameters.length; j++) {
-				params[j] = this.settings.algorithms[i].parameters[j].value;
+			double[] params = new double[this.ensemble.get(i).parameters.length+1];
+			for(int j=0; j<this.ensemble.get(i).parameters.length; j++) {
+				params[j] = this.ensemble.get(i).parameters[j].value;
 			}
 			params[params.length-1] = performance;
 			Instance inst = new DenseInstance(1.0, params);
@@ -181,20 +225,20 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// sample parent configuration
 		ArrayList<Double> silhs = silh.getAllValues(0);
 		int parentIdx = sampleProportionally(silhs);
-		System.out.println("Selected Configuration " + parentIdx + " as parent: " + this.ensemble[parentIdx].getCLICreationString(Clusterer.class));
+		System.out.println("Selected Configuration " + parentIdx + " as parent: " + this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 		
 		// sample new configuration using truncated normal distribution 
-		double[] vals = new double[this.settings.algorithms[parentIdx].parameters.length];
-		for(int i=0; i<this.settings.algorithms[parentIdx].parameters.length; i++) {
+		double[] vals = new double[this.ensemble.get(parentIdx).parameters.length];
+		for(int i=0; i<this.ensemble.get(parentIdx).parameters.length; i++) {
 			
-			if(this.settings.algorithms[parentIdx].parameters[i].type.equals("numeric")) {
-				double mean = this.settings.algorithms[parentIdx].parameters[i].value;
-				double std = this.settings.algorithms[parentIdx].parameters[i].std;
-				double lb = this.settings.algorithms[parentIdx].parameters[i].min;
-				double ub = this.settings.algorithms[parentIdx].parameters[i].max;
-				System.out.println("Sample based on mean: " + mean + ", std: " + std + ", lb: " + lb + ", ub: " + ub);
+			if(this.ensemble.get(parentIdx).parameters[i].type.equals("numeric")) {
+				double mean = this.ensemble.get(parentIdx).parameters[i].value;
+				double std = this.ensemble.get(parentIdx).parameters[i].std;
+				double lb = this.ensemble.get(parentIdx).parameters[i].min;
+				double ub = this.ensemble.get(parentIdx).parameters[i].max;
 				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
 				vals[i] = trncnormal.sample();
+				System.out.println("Sample new configuration for parameter " + i + " with mean: " + mean + ", std: " + std + ", lb: " + lb + ", ub: " + ub + ":" + vals[i]);
 			}
 			
 		}
@@ -205,32 +249,26 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		double prediction = this.ARFreg.getVotesForInstance(newInst)[0];
 		System.out.println("Predict " + Arrays.toString(vals) + ":\t => \t Silhouette: " + prediction);
-		
-		// if we found a promising solution
-		if(prediction > silh.getMinValue(0)){
+
+		if(this.ensemble.size() < this.settings.ensembleSize){
+			System.out.println("Ensemble not full. Add configuration as new algorithm.");
+
+			AlgorithmSettings newConfig = new AlgorithmSettings(this.ensemble.get(parentIdx));
+			for(int i=0; i<vals.length-1; i++) {
+				newConfig.parameters[i].value = vals[i];
+			}
+			newConfig.prepareForUse();
+			this.ensemble.add(newConfig);
+		} else if(prediction > silh.getMinValue(0)){
 			// replace by sampling proportionally
 			int replaceIdx = sampleProportionally(silhs);
-			System.out.println("New Configuration appears to be promising! Replace configuration: " + replaceIdx);
+			System.out.println("Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
 			
 			// store new config in settings
 			for(int j=0; j<vals.length-1; j++) {
-				this.settings.algorithms[replaceIdx].parameters[j].value = vals[j];
+				this.ensemble.get(replaceIdx).parameters[j].value = vals[j];
 			}
-				
-			// construct CLI string
-			StringBuilder commandLine = new StringBuilder();
-			commandLine.append(this.settings.algorithms[replaceIdx].algorithm); // add algorithm class
-			for (ParameterSettings option : this.settings.algorithms[replaceIdx].parameters) {
-				commandLine.append(" ");
-				commandLine.append("-" + option.parameter); // as well as all parameters
-				commandLine.append(" " + option.value);
-			}
-			System.out.println("Initialise: " + commandLine.toString());
-
-			// create new clusterer from CLI string
-			ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
-			this.ensemble[replaceIdx] = (Clusterer) opt.materializeObject(null, null);
-			this.ensemble[replaceIdx].prepareForUse();
+			this.ensemble.get(replaceIdx).prepareForUse();
 		}
 	}
 	
@@ -269,24 +307,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			BufferedReader bufferedReader = new BufferedReader(new FileReader(fileOption.getValue()));
 			Gson gson = new Gson();
 			this.settings = gson.fromJson(bufferedReader, GeneralSettings.class);
+			this.ensemble = new ArrayList<AlgorithmSettings>(this.settings.ensembleSize);
 
-			this.ensemble = new Clusterer[this.settings.algorithms.length];
-			// for all algorithms
 			for (int i = 0; i < this.settings.algorithms.length; i++) {
-
-				// construct CLI string
-				StringBuilder commandLine = new StringBuilder();
-				commandLine.append(this.settings.algorithms[i].algorithm); // add algorithm class
-				for (ParameterSettings option : this.settings.algorithms[i].parameters) {
-					commandLine.append(" ");
-					commandLine.append("-" + option.parameter); // as well as all parameters
-					commandLine.append(" " + option.value);
-				}
-				System.out.println("Initialise: " + commandLine.toString());
-
-				// create new clusterer from CLI string
-				ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
-				this.ensemble[i] = (Clusterer) opt.materializeObject(monitor, repository);
+				this.ensemble.add(this.settings.algorithms[i]);
+				this.ensemble.get(i).prepareForUse();
 			}
 			
 		} catch (
