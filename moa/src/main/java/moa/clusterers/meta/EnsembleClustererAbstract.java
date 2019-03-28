@@ -287,7 +287,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// copy existing clusterer configuration but change settings
 			AlgorithmSettings newConfig = new AlgorithmSettings(this.ensemble.get(parentIdx));
-			for(int i=0; i<vals.length-1; i++) {
+			for(int i=0; i<vals.length; i++) {
 				newConfig.parameters[i].value = vals[i];
 			}
 			// initialise and add to ensemble
@@ -302,7 +302,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			System.out.println("Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
 			
 			// use existing clusterer but change settings
-			for(int j=0; j<vals.length-1; j++) {
+			for(int j=0; j<vals.length; j++) {
 				this.ensemble.get(replaceIdx).parameters[j].value = vals[j];
 			}
 			// and reinitialise (remains in ensemble)
