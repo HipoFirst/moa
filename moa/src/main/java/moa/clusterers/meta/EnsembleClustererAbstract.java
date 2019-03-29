@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.Attribute;
@@ -94,6 +93,7 @@ class AlgorithmSettings {
 class GeneralSettings {
 	public int windowSize;
 	public int ensembleSize;
+	public int newConfigurations;
 	public AlgorithmSettings[] algorithms;
 }
 
@@ -224,8 +224,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			params[params.length - 1] = performance; // add performance as class
 			Instance inst = new DenseInstance(1.0, params);
 
-			// add header to dataset (same as before, TODO: no attribute for class, not sure
-			// if problem)
+			// add header to dataset (same as before) TODO: do we need an attribute for the
+			// class label?
 			Instances dataset = new Instances(null, attributes, 0);
 			dataset.setClassIndex(dataset.numAttributes()); // set class index to our performance feature
 			inst.setDataset(dataset);
@@ -252,59 +252,82 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// sample a parent configuration proportionally to its performance from the
 		// ensemble
 		ArrayList<Double> silhs = silh.getAllValues(0);
-		int parentIdx = sampleProportionally(silhs);
-		System.out.println("Selected Configuration " + parentIdx + " as parent: "
-				+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
+		// ArrayList<AlgorithmSettings> newConfigs = new ArrayList<AlgorithmSettings>[>this.settings.newConfigurations];
 
-		// sample new configuration from the parent
-		double[] vals = new double[this.ensemble.get(parentIdx).parameters.length];
-		for (int i = 0; i < this.ensemble.get(parentIdx).parameters.length; i++) {
+		for (int z = 0; z < this.settings.newConfigurations; z++) {
+			int parentIdx = sampleProportionally(silhs);
+			System.out.println("Selected Configuration " + parentIdx + " as parent: "
+					+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 
-			// for numeric features use truncated normal distribution
-			if (this.ensemble.get(parentIdx).parameters[i].type.equals("numeric")) {
-				double mean = this.ensemble.get(parentIdx).parameters[i].value;
-				double std = this.ensemble.get(parentIdx).parameters[i].std;
-				double lb = this.ensemble.get(parentIdx).parameters[i].min;
-				double ub = this.ensemble.get(parentIdx).parameters[i].max;
-				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
-				vals[i] = trncnormal.sample();
-				System.out.println("Sample new configuration for parameter -"
-						+ this.ensemble.get(parentIdx).parameters[i].parameter + " with mean: " + mean + ", std: " + std
-						+ ", lb: " + lb + ", ub: " + ub + ": " + vals[i]);
-			} else {
-				throw new RuntimeException("Only numeric features implemented so far.");
+			// sample new configuration from the parent
+			double[] vals = new double[this.ensemble.get(parentIdx).parameters.length];
+			for (int i = 0; i < this.ensemble.get(parentIdx).parameters.length; i++) {
+
+				// for numeric features use truncated normal distribution
+				if (this.ensemble.get(parentIdx).parameters[i].type.equals("numeric")) {
+					double mean = this.ensemble.get(parentIdx).parameters[i].value;
+					double std = this.ensemble.get(parentIdx).parameters[i].std;
+					double lb = this.ensemble.get(parentIdx).parameters[i].min;
+					double ub = this.ensemble.get(parentIdx).parameters[i].max;
+					TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
+					vals[i] = trncnormal.sample();
+					System.out.println("Sample new configuration for parameter -"
+							+ this.ensemble.get(parentIdx).parameters[i].parameter + " with mean: " + mean + ", std: "
+							+ std + ", lb: " + lb + ", ub: " + ub + "\t=>\t -" + this.ensemble.get(parentIdx).parameters[i].parameter + " " + vals[i]);
+				} else {
+					throw new RuntimeException("Only numeric features implemented so far.");
+				}
 			}
-		}
 
-		Instance newInst = new DenseInstance(1.0, vals);
-		Instances newDataset = new Instances(null, attributes, 0);
-		newDataset.setClassIndex(newDataset.numAttributes());
-		newInst.setDataset(newDataset);
 
-		// if we still have open slots in the ensemble (not full)
-		if (this.ensemble.size() < this.settings.ensembleSize) {
-			System.out.println("Ensemble not full. Add configuration as new algorithm.");
+			// for (int i = 0; i < this.ensemble.size(); i++) {
+			// 	for (int j = 0; j < this.ensemble.get(i).parameters.length; j++) {
+			// 		if (this.ensemble.get(i).parameters[j].type.equals("numeric")) {
+			// 			this.ensemble.get(i).parameters[j].std = this.ensemble.get(i).parameters[j].std * ((1 / this.settings.newConfigurations)^(1 / this.ensemble.get(i).parameters.length));
+			// 		}
+			// 	}
+			// }
 
-			// copy existing clusterer configuration but change settings
-			AlgorithmSettings newConfig = new AlgorithmSettings(this.ensemble.get(parentIdx));
-			for (int i = 0; i < vals.length; i++) {
-				newConfig.parameters[i].value = vals[i];
-			}
-			// initialise and add to ensemble
-			newConfig.prepareForUse();
-			this.ensemble.add(newConfig);
 
-		} else {
-			// if the ensemble is already full, we predict the performance of the configuration
+			Instance newInst = new DenseInstance(1.0, vals);
+			Instances newDataset = new Instances(null, attributes, 0);
+			newDataset.setClassIndex(newDataset.numAttributes());
+			newInst.setDataset(newDataset);
+
 			double prediction = this.ARFreg.getVotesForInstance(newInst)[0];
 			System.out.print("Predict " + ClassOption
 					.stripPackagePrefix(this.ensemble.get(parentIdx).clusterer.getClass().getName(), Clusterer.class));
 			for (int i = 0; i < this.ensemble.get(parentIdx).parameters.length; i++) {
 				System.out.print(" -" + this.ensemble.get(parentIdx).parameters[i].parameter + " " + vals[i]);
 			}
-			System.out.println(":\t => \t Silhouette: " + prediction);
+			System.out.println("\t => \t Silhouette: " + prediction);
 
-			if (prediction > silh.getMinValue(0)) {
+			//TODO if ensemble empty, we could also just fill
+			if(Double.isNaN(prediction)){
+				return;
+			}
+
+			// if we still have open slots in the ensemble (not full)
+			if (this.ensemble.size() < this.settings.ensembleSize) {
+				System.out.println("Ensemble not full. Add configuration as new algorithm.");
+
+				// copy existing clusterer configuration but change settings
+				AlgorithmSettings newConfig = new AlgorithmSettings(this.ensemble.get(parentIdx));
+				for (int i = 0; i < vals.length; i++) {
+					newConfig.parameters[i].value = vals[i];
+					
+					// Reduce standard deviation for next iteration
+					// TODO this is not directly transferable from irace due to different algorithms
+					newConfig.parameters[i].std = newConfig.parameters[i].std * ((1 / this.settings.newConfigurations)^(1 / newConfig.parameters.length));
+				}
+				// initialise and add to ensemble
+				newConfig.prepareForUse();
+				this.ensemble.add(newConfig);
+
+				// update current silhouettes with the prediction
+				silhs.add(prediction); 
+
+			} else if (prediction > silh.getMinValue(0)) {
 				// if the predicted performance is better than the one we have in the ensemble
 
 				// proportionally sample a configuration that will be replaced
@@ -321,6 +344,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				newConfig.prepareForUse();
 				// and replace in ensemble
 				this.ensemble.set(replaceIdx, newConfig);
+
+				// update current silhouettes with the prediction
+				silhs.set(replaceIdx, prediction);
 			}
 		}
 

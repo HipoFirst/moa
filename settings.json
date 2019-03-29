@@ -1,14 +1,15 @@
 {
 	"windowSize": 5000,
 	"ensembleSize": 5,
+	"newConfigurations": 2,
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
 			"parameters": [{"parameter": "e", "type"="numeric", "value"=0.08, "min"=0, "max"=1}, {"parameter": "b", "type"="numeric", "value"=0.3, "min"=0, "max"=1}]
-		},
-		{
-			"algorithm": "dstream.Dstream",
-			"parameters": [{"parameter": "m", "type"="numeric", "value"=3, "min"=1, "max"=10000}, {"parameter": "l", "type"="numeric", "value"=0.8, "min"=0.001, "max"=0.999}]
-		}
+		}//,
+		// {
+		// 	"algorithm": "dstream.Dstream",
+		// 	"parameters": [{"parameter": "m", "type"="numeric", "value"=3, "min"=1, "max"=10000}, {"parameter": "l", "type"="numeric", "value"=0.8, "min"=0.001, "max"=0.999}]
+		// }
 	]
 }
