@@ -25,44 +25,48 @@ import moa.tasks.TaskMonitor;
 // these classes are initialised by gson and contain the starting configurations
 // we use these configurations to initialise the ensemble using the same classes
 // This class contains the individual parameter settings (such as limits and current value)
-class ParameterSettings {
+class ParameterConfiguration {
 	public String parameter;
 	public double value;
 	public double min;
 	public double max;
 	public String type;
+}
+
+class NumericParameterConfiguration extends ParameterConfiguration{
 	public double std;
 
-	// since a custom constructor is not called by gson, we provide an init method
-	public void prepareForUse() {
-		this.std = (this.max - this.min) / 2;
-	}
-
-	// copy constructor
-	public ParameterSettings(ParameterSettings x) {
+	public NumericParameterConfiguration(ParameterConfiguration x) {
 		this.parameter = x.parameter;
 		this.value = x.value;
 		this.min = x.min;
 		this.max = x.max;
 		this.type = x.type;
-		this.std = x.std;
+		this.std = (this.max - this.min) / 2;
 	}
 }
 
+
 // This class contains the settings of an algorithm (such as name and the actual
 // clusterer object) as well as an array of Parameter Settings
-class AlgorithmSettings {
+class AlgorithmConfiguration {
 	public String algorithm;
-	public ParameterSettings[] parameters;
+	public ParameterConfiguration[] parameters;
 	public Clusterer clusterer;
 
-	// since a custom constructor is not called by gson, we provide an init method
-	public void prepareForUse() {
+	public AlgorithmConfiguration(AlgorithmConfiguration x) {
+
+		this.algorithm = x.algorithm;
+		this.parameters = new ParameterConfiguration[x.parameters.length];
+		for (int i = 0; i < x.parameters.length; i++) {
+			this.parameters[i] = new NumericParameterConfiguration(x.parameters[i]);
+		}
+
 		// initialise a new algorithm using the Command Line Interface (CLI)
 		// construct CLI string from settings, e.g. denstream.WithDBSCAN -e 0.08 -b 0.3
 		StringBuilder commandLine = new StringBuilder();
 		commandLine.append(this.algorithm); // first the algorithm class
-		for (ParameterSettings option : this.parameters) {
+		for (ParameterConfiguration option : this.parameters) {
 			commandLine.append(" ");
 			commandLine.append("-" + option.parameter); // then the parameter
 			commandLine.append(" " + option.value); // and its value
@@ -73,18 +77,6 @@ class AlgorithmSettings {
 		ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
 		this.clusterer = (Clusterer) opt.materializeObject(null, null);
 		this.clusterer.prepareForUse();
-
-		for (ParameterSettings parameter : this.parameters) {
-			parameter.prepareForUse();
-		}
-	}
-
-	public AlgorithmSettings(AlgorithmSettings x) {
-		this.algorithm = x.algorithm;
-		this.parameters = new ParameterSettings[x.parameters.length];
-		for (int i = 0; i < x.parameters.length; i++) {
-			this.parameters[i] = new ParameterSettings(x.parameters[i]);
-		}
 	}
 }
 
@@ -94,7 +86,7 @@ class GeneralSettings {
 	public int windowSize;
 	public int ensembleSize;
 	public int newConfigurations;
-	public AlgorithmSettings[] algorithms;
+	public AlgorithmConfiguration[] algorithms;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -104,7 +96,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	int instancesSeen;
 	int currentEnsembleSize;
 	int bestModel;
-	ArrayList<AlgorithmSettings> ensemble;
+	ArrayList<AlgorithmConfiguration> ensemble;
 	ArrayList<DataPoint> windowPoints;
 	AdaptiveRandomForestRegressor ARFreg;
 	GeneralSettings settings;
@@ -252,7 +244,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// sample a parent configuration proportionally to its performance from the
 		// ensemble
 		ArrayList<Double> silhs = silh.getAllValues(0);
-		// ArrayList<AlgorithmSettings> newConfigs = new ArrayList<AlgorithmSettings>[>this.settings.newConfigurations];
+		// ArrayList<AlgorithmConfiguration> newConfigs = new ArrayList<AlgorithmConfiguration>[>this.settings.newConfigurations];
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 			int parentIdx = sampleProportionally(silhs);
@@ -264,11 +256,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			for (int i = 0; i < this.ensemble.get(parentIdx).parameters.length; i++) {
 
 				// for numeric features use truncated normal distribution
-				if (this.ensemble.get(parentIdx).parameters[i].type.equals("numeric")) {
-					double mean = this.ensemble.get(parentIdx).parameters[i].value;
-					double std = this.ensemble.get(parentIdx).parameters[i].std;
-					double lb = this.ensemble.get(parentIdx).parameters[i].min;
-					double ub = this.ensemble.get(parentIdx).parameters[i].max;
+				if (this.ensemble.get(parentIdx).parameters[i] instanceof NumericParameterConfiguration) {
+					NumericParameterConfiguration paramConfig = (NumericParameterConfiguration) this.ensemble.get(parentIdx).parameters[i];
+
+					double mean = paramConfig.value;
+					double std = paramConfig.std;
+					double lb = paramConfig.min;
+					double ub = paramConfig.max;
 					TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
 					vals[i] = trncnormal.sample();
 					System.out.println("Sample new configuration for parameter -"
@@ -312,19 +306,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				System.out.println("Ensemble not full. Add configuration as new algorithm.");
 
 				// copy existing clusterer configuration but change settings
-				AlgorithmSettings newConfig = new AlgorithmSettings(this.ensemble.get(parentIdx));
+				AlgorithmConfiguration newAlgorithmConfig = new AlgorithmConfiguration(this.ensemble.get(parentIdx));
 				for (int i = 0; i < vals.length; i++) {
-					newConfig.parameters[i].value = vals[i];
+					newAlgorithmConfig.parameters[i].value = vals[i];
 					
 					// Reduce standard deviation for next iteration
 					// TODO this is not directly transferable from irace due to different algorithms
-					if (newConfig.parameters[i].type.equals("numeric")) {
-						newConfig.parameters[i].std = newConfig.parameters[i].std * ((1 / this.settings.newConfigurations)^(1 / newConfig.parameters.length));
+					if (newAlgorithmConfig.parameters[i] instanceof NumericParameterConfiguration) {
+						NumericParameterConfiguration paramConfig = (NumericParameterConfiguration) newAlgorithmConfig.parameters[i];
+						paramConfig.std = paramConfig.std * ((1 / this.settings.newConfigurations)^(1 / newAlgorithmConfig.parameters.length));
 					}
 				}
-				// initialise and add to ensemble
-				newConfig.prepareForUse();
-				this.ensemble.add(newConfig);
+				// add to ensemble
+				this.ensemble.add(newAlgorithmConfig);
 
 				// update current silhouettes with the prediction
 				silhs.add(prediction); 
@@ -338,13 +332,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						"Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
 
 				// copy existing clusterer configuration but change settings
-				AlgorithmSettings newConfig = new AlgorithmSettings(this.ensemble.get(parentIdx));
+				AlgorithmConfiguration newConfig = new AlgorithmConfiguration(this.ensemble.get(parentIdx));
 				for (int i = 0; i < vals.length; i++) {
 					newConfig.parameters[i].value = vals[i];
 				}
-				// initialise and add to ensemble
-				newConfig.prepareForUse();
-				// and replace in ensemble
+				// replace in ensemble
 				this.ensemble.set(replaceIdx, newConfig);
 
 				// update current silhouettes with the prediction
@@ -392,11 +384,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// also create the ensemble which can be larger than the provided (starting)
 			// configurations
-			this.ensemble = new ArrayList<AlgorithmSettings>(this.settings.ensembleSize);
+			this.ensemble = new ArrayList<AlgorithmConfiguration>(this.settings.ensembleSize);
 			// copy and initialise the provided starting configurations in the ensemble
 			for (int i = 0; i < this.settings.algorithms.length; i++) {
-				this.ensemble.add(this.settings.algorithms[i]);
-				this.ensemble.get(i).prepareForUse();
+				this.ensemble.add(new AlgorithmConfiguration(this.settings.algorithms[i]));
 			}
 
 		} catch (
