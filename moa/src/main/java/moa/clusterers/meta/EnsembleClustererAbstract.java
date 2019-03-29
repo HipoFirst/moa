@@ -318,7 +318,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					
 					// Reduce standard deviation for next iteration
 					// TODO this is not directly transferable from irace due to different algorithms
-					newConfig.parameters[i].std = newConfig.parameters[i].std * ((1 / this.settings.newConfigurations)^(1 / newConfig.parameters.length));
+					if (newConfig.parameters[i].type.equals("numeric")) {
+						newConfig.parameters[i].std = newConfig.parameters[i].std * ((1 / this.settings.newConfigurations)^(1 / newConfig.parameters.length));
+					}
 				}
 				// initialise and add to ensemble
 				newConfig.prepareForUse();
