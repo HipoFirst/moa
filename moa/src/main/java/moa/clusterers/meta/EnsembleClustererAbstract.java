@@ -331,10 +331,23 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// real: round(rtnorm(1, mean, stdDev, lowerBound, upperBound), digits)
 		// categorical: sample(x = possibleValues, size = 1, prob = probVector)
 
-		// irace adaption of sampling parameters:
+		// irace adaption of numeric parameters:
 		// mean taken from parent
 		// std: newProbVector <- probVector[1] * ((1 / nbNewConfigurations)^(1 /
 		// parameters$nbVariable))
+
+		// irace adaption of categorical parameters:
+		// # start with
+		// value <- rep((1 / nbValues), nbValues)
+		// # Decrease first all values in the vector:
+		// probVector <- probVector * (1 - ((indexIteration - 1) / nbIterations))
+		// # cat("new probVector after decrease: ", probVector)
+		// # Find the value that has been "chosen" to increase its probability.
+		// indexValue <- which (possibleValues == actualValue)
+		// probVector[indexValue] <- (probVector[indexValue] + ((indexIteration - 1) / nbIterations))
+		// probVector <- probVector / sum(probVector)
+
+
 
 		// sample a parent configuration proportionally to its performance from the
 		// ensemble
@@ -361,7 +374,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ vals[pos - 1]);
 			}
 			for (IntegerParameter param : this.ensemble.get(parentIdx).integerParameters) {
-				// for numeric features use truncated normal distribution
+				// for integer features use truncated normal distribution
 				int mean = param.value;
 				double std = param.std;
 				int lb = param.range[0];
