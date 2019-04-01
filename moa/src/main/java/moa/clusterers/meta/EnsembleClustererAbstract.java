@@ -91,20 +91,41 @@ class NominalParameter {
 	}
 }
 
+class IntegerParameter {
+	public String parameter;
+	public int value;
+	public int[] range;
+	public Attribute attribute;
+	public double std;
+
+
+	public IntegerParameter(ParameterConfiguration x) {
+		this.parameter = x.parameter;
+		this.value = (int) (double)x.value; //TODO fix casts
+		this.range = new int[x.range.length];
+		for (int i = 0; i < x.range.length; i++){
+			range[i] = (int) (double)x.range[i];
+		}
+		this.std = (this.range[1] - this.range[0]) / 2;
+		this.attribute = new Attribute(x.parameter);
+	}
+}
+
 class Algorithm {
 	public String algorithm;
 	public ArrayList<NumericalParameter> numericalParameters;
 	public ArrayList<NominalParameter> nominalParameters;
+	public ArrayList<IntegerParameter> integerParameters;
 	public Clusterer clusterer;
 	public ArrayList<Attribute> attributes;
 
 	public Algorithm(Algorithm x) {
 
 		this.algorithm = x.algorithm;
-		// TODO this is probably referencing
-		// should be a deep copy but doesnt matter since the algorithm not reinitialised
+		// TODO this is probably referencing, should be a deep copy or a new object entirely
 		this.numericalParameters = x.numericalParameters; 
 		this.nominalParameters = x.nominalParameters;
+		this.integerParameters = x.integerParameters;
 		this.attributes = x.attributes;
 
 		// init(); // we dont initialise here because we want to manipulate the parameters first
@@ -115,12 +136,17 @@ class Algorithm {
 		this.algorithm = x.algorithm;
 		this.numericalParameters = new ArrayList<NumericalParameter>();
 		this.nominalParameters = new ArrayList<NominalParameter>();
+		this.integerParameters = new ArrayList<IntegerParameter>();
 		this.attributes = new ArrayList<Attribute>();
 		for (ParameterConfiguration param : x.parameters) {
 			if (param.type.equals("numeric")) {
 				NumericalParameter numParam = new NumericalParameter(param);
 				this.numericalParameters.add(numParam);
 				this.attributes.add(new Attribute(numParam.parameter));
+			} else if (param.type.equals("integer")){
+				IntegerParameter intParam = new IntegerParameter(param);
+				this.integerParameters.add(intParam);
+				this.attributes.add(new Attribute(intParam.parameter));
 			} else if (param.type.equals("categorical")) {
 				NominalParameter nomParam = new NominalParameter(param);
 				this.nominalParameters.add(nomParam);
@@ -136,6 +162,11 @@ class Algorithm {
 		StringBuilder commandLine = new StringBuilder();
 		commandLine.append(this.algorithm); // first the algorithm class
 		for (NumericalParameter option : this.numericalParameters) {
+			commandLine.append(" ");
+			commandLine.append("-" + option.parameter); // then the parameter
+			commandLine.append(" " + option.value); // and its value
+		}
+		for (IntegerParameter option : this.integerParameters) {
 			commandLine.append(" ");
 			commandLine.append("-" + option.parameter); // then the parameter
 			commandLine.append(" " + option.value); // and its value
@@ -266,10 +297,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// create new training instance based to train regressor
 			// features are the algorithm and its configuration, the class is its
 			// performance in the last window
-			double[] params = new double[this.ensemble.get(i).numericalParameters.size() + 1];
+			double[] params = new double[this.ensemble.get(i).attributes.size() + 1];
 			int pos = 0;
 			for (NumericalParameter param : this.ensemble.get(i).numericalParameters) {
 				params[pos++] = param.value; // add configuration as features
+			}
+			for (IntegerParameter param : this.ensemble.get(i).integerParameters) {
+				params[pos++] = param.value; // add configuration as features
+			}
+			for (NominalParameter param : this.ensemble.get(i).nominalParameters) {
+				// params[pos++] = param.value; // add configuration as features
 			}
 
 			params[params.length - 1] = performance; // add performance as class
@@ -309,7 +346,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 
 			// sample new configuration from the parent
-			double[] vals = new double[this.ensemble.get(parentIdx).numericalParameters.size()];
+			double[] vals = new double[this.ensemble.get(parentIdx).attributes.size()];
 			int pos = 0;
 			for (NumericalParameter param : this.ensemble.get(parentIdx).numericalParameters) {
 				// for numeric features use truncated normal distribution
@@ -319,7 +356,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				double ub = param.range[1];
 				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
 				vals[pos++] = trncnormal.sample();
-				System.out.println("Sample new configuration for parameter -" + param.parameter + " with mean: " + mean
+				System.out.println("Sample new configuration for numerical parameter -" + param.parameter + " with mean: " + mean
+						+ ", std: " + std + ", lb: " + lb + ", ub: " + ub + "\t=>\t -" + param.parameter + " "
+						+ vals[pos - 1]);
+			}
+			for (IntegerParameter param : this.ensemble.get(parentIdx).integerParameters) {
+				// for numeric features use truncated normal distribution
+				int mean = param.value;
+				double std = param.std;
+				int lb = param.range[0];
+				int ub = param.range[1];
+				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
+				vals[pos++] = Math.round(trncnormal.sample());
+				System.out.println("Sample new configuration for integer parameter -" + param.parameter + " with mean: " + mean
 						+ ", std: " + std + ", lb: " + lb + ", ub: " + ub + "\t=>\t -" + param.parameter + " "
 						+ vals[pos - 1]);
 			}
@@ -336,6 +385,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			for (int i = 0; i < this.ensemble.get(parentIdx).numericalParameters.size(); i++) {
 				System.out.print(" -" + this.ensemble.get(parentIdx).numericalParameters.get(i).parameter + " " + vals[i]);
 			}
+			for (int i = 0; i < this.ensemble.get(parentIdx).integerParameters.size(); i++) {
+				System.out.print(" -" + this.ensemble.get(parentIdx).integerParameters.get(i).parameter + " " + vals[i+this.ensemble.get(parentIdx).numericalParameters.size()]);
+			}
 			System.out.println("\t => \t Silhouette: " + prediction);
 
 			// TODO if ensemble empty, we could also just fill
@@ -348,15 +400,26 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				System.out.println("Ensemble not full. Add configuration as new algorithm.");
 
 				// copy existing clusterer configuration but change settings
+				// TODO maybe we should init a new one instead of copying to avoid deep copy problems
 				Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
-				for (int i = 0; i < vals.length; i++) {
+				for (int i = 0; i < newAlgorithm.numericalParameters.size(); i++) {
 					NumericalParameter newParam = newAlgorithm.numericalParameters.get(i);
 					newParam.value = vals[i];
 
 					// Reduce standard deviation for next iteration
-					// TODO this is not directly transferable from irace due to different algorithms
+					// TODO this is not directly transferable from irace
 					newParam.std = newParam.std * (Math.pow((1.0 / this.settings.newConfigurations), (1.0 / newAlgorithm.numericalParameters.size())));
 				}
+				for (int i = 0; i < newAlgorithm.integerParameters.size(); i++) {
+					IntegerParameter newParam = newAlgorithm.integerParameters.get(i);
+					newParam.value = (int) Math.round(vals[i]);
+					newParam.std = newParam.std * (Math.pow((1.0 / this.settings.newConfigurations), (1.0 / newAlgorithm.numericalParameters.size())));
+				}
+				for (int i = 0; i < newAlgorithm.nominalParameters.size(); i++) {
+					// NominalParameter newParam = newAlgorithm.nominalParameters.get(i);
+					//TODO
+				}
+
 				newAlgorithm.init();
 
 				// add to ensemble
