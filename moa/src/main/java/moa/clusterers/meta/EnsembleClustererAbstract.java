@@ -628,9 +628,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
-			// copy existing clusterer configuration but change settings
-			// TODO maybe we should init a new one instead of copying to avoid deep copy
-			// problems
+			// copy existing clusterer configuration
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(silhs);
 			System.out.println("Selected Configuration " + parentIdx + " as parent: " + this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
@@ -670,7 +668,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			}
 			System.out.println("\t => \t Silhouette: " + prediction);
 
-			// TODO if ensemble empty, we could also just fill
+			// random forest only works with at least two training samples
 			if (Double.isNaN(prediction)) {
 				return;
 			}
