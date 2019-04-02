@@ -8,7 +8,9 @@
 			"parameters": [
 				{"parameter": "e", "type"="numeric", "value"=0.08, "range"=[0,1]}, 
 				{"parameter": "b", "type"="numeric", "value"=0.3, range=[0,1]}, 
-				{"parameter": "i", "type"="integer", "value"=1000, range=[1,10000]}
+				{"parameter": "i", "type"="integer", "value"=1200, range=[1,10000]},
+				{"parameter": "M", "type"="boolean", "value"="true"}
+				//,{"parameter": "bla", "type"="nominal", "value"="This", "range"=["This","is","a","test"]}
 			]
 		}//,
 		// {
