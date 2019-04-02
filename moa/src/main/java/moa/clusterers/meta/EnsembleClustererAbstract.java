@@ -508,8 +508,8 @@ class Algorithm {
 		}
 	}
 
-	public double[] getParamVector() {
-		double[] params = new double[this.attributes.size() + 1];
+	public double[] getParamVector(int padding) {
+		double[] params = new double[this.attributes.size() + padding];
 		int pos = 0;
 		for (IParameter param : this.parameters) {
 			params[pos++] = param.getValue();
@@ -624,7 +624,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				this.bestModel = i; // the clusterer with the best result becomes the active one
 			}
 
-			double[] params = this.ensemble.get(i).getParamVector();
+			double[] params = this.ensemble.get(i).getParamVector(1);
 
 			params[params.length - 1] = performance; // add performance as class
 			Instance inst = new DenseInstance(1.0, params);
@@ -658,7 +658,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			newAlgorithm.sampleNewConfig(this.settings.newConfigurations);
 			newAlgorithm.init();
 
-			double[] params = newAlgorithm.getParamVector();
+			double[] params = newAlgorithm.getParamVector(0);
 			Instance newInst = new DenseInstance(1.0, params);
 			Instances newDataset = new Instances(null, newAlgorithm.attributes, 0);
 			newDataset.setClassIndex(newDataset.numAttributes());
