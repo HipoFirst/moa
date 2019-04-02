@@ -85,7 +85,7 @@ class NumericalParameter {
 		this.attribute = new Attribute(x.parameter);
 	}
 
-	public double sampleNewConfig(int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
 		// update configuration
 		// for numeric features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
@@ -99,8 +99,6 @@ class NumericalParameter {
 
 		// adapt distribution
 		this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
-
-		return this.value;
 	}
 }
 
@@ -131,7 +129,7 @@ class IntegerParameter {
 		this.attribute = new Attribute(x.parameter);
 	}
 
-	public double sampleNewConfig(int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
 		// update configuration
 		// for integer features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
@@ -143,8 +141,6 @@ class IntegerParameter {
 		this.value = newValue;
 		// adapt distribution
 		this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
-
-		return this.value;
 	}
 }
 
@@ -184,7 +180,7 @@ class CategoricalParameter {
 		}
 	}
 
-	public double sampleNewConfig(){
+	public void sampleNewConfig(){
 		// update configuration
 		this.numericValue = EnsembleClustererAbstract.sampleProportionally(this.probabilities);
 		String newValue = this.range[this.numericValue];
@@ -214,12 +210,9 @@ class CategoricalParameter {
 		for (int i = 0; i < this.probabilities.size(); i++) {
 			this.probabilities.set(i, this.probabilities.get(i) / sum);
 		}
-
-		return numericValue;
 	}
 }
 
-// TODO ordinal parameter
 // the representation of a boolean / binary parameter
 class BooleanParameter {
 	public String parameter;
@@ -254,7 +247,7 @@ class BooleanParameter {
 		}
 	}
 
-	public double sampleNewConfig(){
+	public void sampleNewConfig(){
 		// update configuration
 		this.numericValue = EnsembleClustererAbstract.sampleProportionally(this.probabilities);
 		String newValue = this.range[this.numericValue];
@@ -283,10 +276,64 @@ class BooleanParameter {
 		for (int i = 0; i < this.probabilities.size(); i++) {
 			this.probabilities.set(i, this.probabilities.get(i) / sum);
 		}
-
-		return numericValue;
 	}
 }
+
+// the representation of an integer parameter
+class OrdinalParameter {
+	public String parameter;
+	public String value;
+	public int numericValue;
+	public String[] range;
+	public double std;
+	public Attribute attribute;
+
+
+	// copy constructor
+	public OrdinalParameter(OrdinalParameter x){
+		this.parameter = x.parameter;
+		this.value = x.value;
+		this.numericValue = x.numericValue;
+		this.range = x.range.clone();
+		this.std = x.std;
+		this.attribute = x.attribute;
+	}
+
+	// init constructor
+	public OrdinalParameter(ParameterConfiguration x) {
+		this.parameter = x.parameter;
+		this.value = String.valueOf(x.value);
+		this.range = new String[x.range.length];
+		for (int i = 0; i < x.range.length; i++) {
+			range[i] = String.valueOf(x.range[i]);
+			if (this.range[i].equals(this.value)) {
+				this.numericValue = i; // get index of init value
+			}
+		}
+		this.std = (this.range.length - 0) / 2;
+		this.attribute = new Attribute(x.parameter);
+
+	}
+
+	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
+		// update configuration
+		// treat index of range as integer parameter
+		TruncatedNormal trncnormal = new TruncatedNormal(this.numericValue, this.std, (double)(this.range.length-1), 0.0); // limits are the indexes of the range
+		int newValue = (int) Math.round(trncnormal.sample());
+		System.out.println("Sample new configuration for ordinal parameter -" + this.parameter + " with mean: "
+				+ this.numericValue + ", std: " + this.std + ", lb: " + 0 + ", ub: " + (this.range.length-1) + "\t=>\t -"
+				+ this.parameter + " " + this.range[newValue] + " (" + newValue + ")");
+
+		this.numericValue = newValue;
+		this.value = this.range[this.numericValue];
+
+		// adapt distribution
+		this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
+	}
+
+}
+
+
 
 
 class Algorithm {
@@ -295,6 +342,7 @@ class Algorithm {
 	public ArrayList<CategoricalParameter> categoricalParameters;
 	public ArrayList<IntegerParameter> integerParameters;
 	public ArrayList<BooleanParameter> booleanParameters;
+	public ArrayList<OrdinalParameter> ordinalParameters;
 	public Clusterer clusterer;
 	public ArrayList<Attribute> attributes;
 
@@ -320,6 +368,10 @@ class Algorithm {
 		for(BooleanParameter param: x.booleanParameters){
 			this.booleanParameters.add(new BooleanParameter(param));
 		}
+		this.ordinalParameters = new ArrayList<OrdinalParameter>(x.ordinalParameters.size());
+		for(OrdinalParameter param: x.ordinalParameters){
+			this.ordinalParameters.add(new OrdinalParameter(param));
+		}
 
 		// init(); // we dont initialise here because we want to manipulate the
 		// parameters first
@@ -333,6 +385,7 @@ class Algorithm {
 		this.categoricalParameters = new ArrayList<CategoricalParameter>();
 		this.integerParameters = new ArrayList<IntegerParameter>();
 		this.booleanParameters = new ArrayList<BooleanParameter>();
+		this.ordinalParameters = new ArrayList<OrdinalParameter>();
 
 		this.attributes = new ArrayList<Attribute>();
 		for (ParameterConfiguration paramConfig : x.parameters) {
@@ -352,6 +405,12 @@ class Algorithm {
 				BooleanParameter param = new BooleanParameter(paramConfig);
 				this.booleanParameters.add(param);
 				this.attributes.add(new Attribute(param.parameter, Arrays.asList(param.range)));
+			} else if (paramConfig.type.equals("ordinal")) {
+				OrdinalParameter param = new OrdinalParameter(paramConfig);
+				this.ordinalParameters.add(param);
+				this.attributes.add(new Attribute(param.parameter));
+			} else{
+				throw new RuntimeException("Unknown parameter type. Use 'numeric', 'integer', 'nominal', 'boolean' or 'ordinal'");
 			}
 		}
 		init();
@@ -380,6 +439,10 @@ class Algorithm {
 				commandLine.append(" -" + option.parameter); // only the parameter
 			}
 		}
+		for (OrdinalParameter option : this.ordinalParameters) {
+			commandLine.append(" -" + option.parameter);
+			commandLine.append(" " + option.value);
+		}
 		System.out.println("Initialise: " + commandLine.toString());
 
 		// create new clusterer from CLI string
@@ -403,6 +466,9 @@ class Algorithm {
 		for (BooleanParameter param : this.booleanParameters) {
 			param.sampleNewConfig();
 		}
+		for (OrdinalParameter param : this.ordinalParameters) {
+			param.sampleNewConfig(nbNewConfigurations, this.attributes.size());
+		}
 	}
 
 	public double[] getParamVector(){
@@ -418,6 +484,9 @@ class Algorithm {
 			params[pos++] = param.numericValue;
 		}
 		for (BooleanParameter param : this.booleanParameters) {
+			params[pos++] = param.numericValue;
+		}
+		for (OrdinalParameter param : this.ordinalParameters) {
 			params[pos++] = param.numericValue;
 		}
 		return params;

@@ -7,10 +7,11 @@
 			"algorithm": "denstream.WithDBSCAN",
 			"parameters": [
 				{"parameter": "e", "type"="numeric", "value"=0.08, "range"=[0,1]}, 
-				{"parameter": "b", "type"="numeric", "value"=0.3, range=[0,1]}, 
-				{"parameter": "i", "type"="integer", "value"=1200, range=[1,10000]},
-				{"parameter": "M", "type"="boolean", "value"="true"}
-				//,{"parameter": "bla", "type"="nominal", "value"="This", "range"=["This","is","a","test"]}
+				{"parameter": "b", "type"="numeric", "value"=0.3, "range"=[0,1]}, 
+				{"parameter": "i", "type"="integer", "value"=1200, "range"=[1,10000]},
+				{"parameter": "M", "type"="boolean", "value"="true"},
+				// {"parameter": "o", "type"="ordinal", "value"="good", "range"=["bad","medium","good"]}
+				//,{"parameter": "n", "type"="categorical", "value"="female", "range"=["female","male"]}
 			]
 		}//,
 		// {
