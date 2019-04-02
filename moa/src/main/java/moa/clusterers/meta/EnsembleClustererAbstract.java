@@ -73,11 +73,14 @@ class NumericalParameter {
 	}
 }
 
+//TODO I dont think there are any clustering algorithms with nominal parameters in MOA right now
 class NominalParameter {
 	public String parameter;
 	public String value;
+	public int numericValue;
 	public String[] range;
 	public Attribute attribute;
+	public ArrayList<Double> probabilities;
 
 	public NominalParameter(ParameterConfiguration x) {
 		this.parameter = x.parameter;
@@ -85,9 +88,15 @@ class NominalParameter {
 		this.range = new String[x.range.length];
 		for (int i = 0; i < x.range.length; i++){
 			range[i] = String.valueOf(x.range[i]);
+			if(this.range[i].equals(this.value)){
+				this.numericValue = i; // get index of init value
+			}
 		}
 		this.attribute = new Attribute(x.parameter, Arrays.asList(range));
-
+		this.probabilities = new ArrayList<Double>(x.range.length);
+		for(int i = 0; i < this.probabilities.size(); i++){
+			this.probabilities.add(1.0/x.range.length); // equal probabilities
+		}
 	}
 }
 
@@ -97,7 +106,6 @@ class IntegerParameter {
 	public int[] range;
 	public Attribute attribute;
 	public double std;
-
 
 	public IntegerParameter(ParameterConfiguration x) {
 		this.parameter = x.parameter;
@@ -111,11 +119,26 @@ class IntegerParameter {
 	}
 }
 
+// TODO ordinal parameter
+class BooleanParameter {
+	public String parameter;
+	public int value;
+	public Attribute attribute;
+
+	public BooleanParameter(ParameterConfiguration x) {
+		this.parameter = x.parameter;
+		this.value = (int) (double)x.value; //TODO fix casts
+		this.attribute = new Attribute(x.parameter);
+	}
+}
+
+
 class Algorithm {
 	public String algorithm;
 	public ArrayList<NumericalParameter> numericalParameters;
 	public ArrayList<NominalParameter> nominalParameters;
 	public ArrayList<IntegerParameter> integerParameters;
+	public ArrayList<BooleanParameter> booleanParameters;
 	public Clusterer clusterer;
 	public ArrayList<Attribute> attributes;
 
@@ -126,6 +149,7 @@ class Algorithm {
 		this.numericalParameters = x.numericalParameters; 
 		this.nominalParameters = x.nominalParameters;
 		this.integerParameters = x.integerParameters;
+		this.booleanParameters = x.booleanParameters;
 		this.attributes = x.attributes;
 
 		// init(); // we dont initialise here because we want to manipulate the parameters first
@@ -137,6 +161,8 @@ class Algorithm {
 		this.numericalParameters = new ArrayList<NumericalParameter>();
 		this.nominalParameters = new ArrayList<NominalParameter>();
 		this.integerParameters = new ArrayList<IntegerParameter>();
+		this.booleanParameters = new ArrayList<BooleanParameter>();
+
 		this.attributes = new ArrayList<Attribute>();
 		for (ParameterConfiguration param : x.parameters) {
 			if (param.type.equals("numeric")) {
@@ -151,6 +177,10 @@ class Algorithm {
 				NominalParameter nomParam = new NominalParameter(param);
 				this.nominalParameters.add(nomParam);
 				this.attributes.add(new Attribute(nomParam.parameter, Arrays.asList(nomParam.range)));
+			} else if (param.type.equals("categorical")) {
+				BooleanParameter boolParam = new BooleanParameter(param);
+				this.booleanParameters.add(boolParam);
+				this.attributes.add(new Attribute(boolParam.parameter)); //todo make this nominal?
 			}
 		}
 		init();
@@ -168,13 +198,17 @@ class Algorithm {
 		}
 		for (IntegerParameter option : this.integerParameters) {
 			commandLine.append(" ");
-			commandLine.append("-" + option.parameter); // then the parameter
-			commandLine.append(" " + option.value); // and its value
+			commandLine.append("-" + option.parameter);
+			commandLine.append(" " + option.value);
 		}
 		for (NominalParameter option : this.nominalParameters) {
 			commandLine.append(" ");
-			commandLine.append("-" + option.parameter); // then the parameter
-			commandLine.append(" " + option.value); // and its value
+			commandLine.append("-" + option.parameter);
+			commandLine.append(" " + option.value);
+		}
+		for (BooleanParameter option : this.booleanParameters) {
+			commandLine.append(" ");
+			commandLine.append("-" + option.parameter); // only the parameter
 		}
 		System.out.println("Initialise: " + commandLine.toString());
 
@@ -189,6 +223,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	private static final long serialVersionUID = 1L;
 
+	int iteration;
 	int instancesSeen;
 	int currentEnsembleSize;
 	int bestModel;
@@ -306,7 +341,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				params[pos++] = param.value; // add configuration as features
 			}
 			for (NominalParameter param : this.ensemble.get(i).nominalParameters) {
-				// params[pos++] = param.value; // add configuration as features
+				params[pos++] = param.numericValue; // add configuration as features
 			}
 
 			params[params.length - 1] = performance; // add performance as class
@@ -349,8 +384,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 
 
-		// sample a parent configuration proportionally to its performance from the
-		// ensemble
+		// sample a parent configuration proportionally to its performance from the ensemble
 		ArrayList<Double> silhs = silh.getAllValues(0);
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
@@ -363,26 +397,28 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			int pos = 0;
 			for (NumericalParameter param : this.ensemble.get(parentIdx).numericalParameters) {
 				// for numeric features use truncated normal distribution
-				double mean = param.value;
-				double std = param.std;
-				double lb = param.range[0];
-				double ub = param.range[1];
-				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
+				TruncatedNormal trncnormal = new TruncatedNormal(param.value, param.std, param.range[0], param.range[1]);
 				vals[pos++] = trncnormal.sample();
-				System.out.println("Sample new configuration for numerical parameter -" + param.parameter + " with mean: " + mean
-						+ ", std: " + std + ", lb: " + lb + ", ub: " + ub + "\t=>\t -" + param.parameter + " "
+				System.out.println("Sample new configuration for numerical parameter -" + param.parameter + " with mean: " + param.value
+						+ ", std: " + param.std + ", lb: " + param.range[0] + ", ub: " + param.range[1] + "\t=>\t -" + param.parameter + " "
 						+ vals[pos - 1]);
 			}
 			for (IntegerParameter param : this.ensemble.get(parentIdx).integerParameters) {
 				// for integer features use truncated normal distribution
-				int mean = param.value;
-				double std = param.std;
-				int lb = param.range[0];
-				int ub = param.range[1];
-				TruncatedNormal trncnormal = new TruncatedNormal(mean, std, lb, ub);
+				TruncatedNormal trncnormal = new TruncatedNormal(param.value, param.std, param.range[0], param.range[1]);
 				vals[pos++] = Math.round(trncnormal.sample());
-				System.out.println("Sample new configuration for integer parameter -" + param.parameter + " with mean: " + mean
-						+ ", std: " + std + ", lb: " + lb + ", ub: " + ub + "\t=>\t -" + param.parameter + " "
+				System.out.println("Sample new configuration for integer parameter -" + param.parameter + " with mean: " + param.value
+						+ ", std: " + param.std + ", lb: " + param.range[0] + ", ub: " + param.range[1] + "\t=>\t -" + param.parameter + " "
+						+ vals[pos - 1]);
+			}
+			for(NominalParameter param: this.ensemble.get(parentIdx).nominalParameters){
+				// Decrease all values in the vector
+				for(int i=0; i<param.probabilities.size(); i++){
+					param.probabilities.set(i, param.probabilities.get(i) * (1 - ((this.instancesSeen - 1) / 100))); // TODO not directly transferable, (1-(iter -1) / maxIter)
+				}
+				// choose a value
+				vals[pos++] = sampleProportionally(param.probabilities);	
+				System.out.println("Sample new configuration for nominal parameter -" + param.parameter + "\t=>\t -" + param.parameter + " "
 						+ vals[pos - 1]);
 			}
 
@@ -393,14 +429,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			newInst.setDataset(newDataset);
 
 			double prediction = this.ARFreg.getVotesForInstance(newInst)[0];
+			pos=0;
 			System.out.print("Predict " + ClassOption
 					.stripPackagePrefix(this.ensemble.get(parentIdx).clusterer.getClass().getName(), Clusterer.class));
 			for (int i = 0; i < this.ensemble.get(parentIdx).numericalParameters.size(); i++) {
-				System.out.print(" -" + this.ensemble.get(parentIdx).numericalParameters.get(i).parameter + " " + vals[i]);
+				System.out.print(" -" + this.ensemble.get(parentIdx).numericalParameters.get(i).parameter + " " + vals[pos++]);
 			}
 			for (int i = 0; i < this.ensemble.get(parentIdx).integerParameters.size(); i++) {
-				System.out.print(" -" + this.ensemble.get(parentIdx).integerParameters.get(i).parameter + " " + vals[i+this.ensemble.get(parentIdx).numericalParameters.size()]);
+				System.out.print(" -" + this.ensemble.get(parentIdx).integerParameters.get(i).parameter + " " + vals[pos++]);
 			}
+			for (int i = 0; i < this.ensemble.get(parentIdx).nominalParameters.size(); i++) {
+				System.out.print(" -" + this.ensemble.get(parentIdx).nominalParameters.get(i).parameter + " " + vals[pos++]);
+			}
+
 			System.out.println("\t => \t Silhouette: " + prediction);
 
 			// TODO if ensemble empty, we could also just fill
@@ -408,32 +449,44 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				return;
 			}
 
+			// copy existing clusterer configuration but change settings
+			// TODO maybe we should init a new one instead of copying to avoid deep copy problems
+			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
+			pos=0;
+			for (NumericalParameter param: newAlgorithm.numericalParameters) {
+				param.value = vals[pos++];
+				// Reduce standard deviation for next iteration TODO this is not directly transferable from irace
+				param.std = param.std * (Math.pow((1.0 / this.settings.newConfigurations), (1.0 / newAlgorithm.numericalParameters.size()))); // TODO use attributes.size() instead?
+			}
+			for (IntegerParameter param: newAlgorithm.integerParameters) {
+				param.value = (int) Math.round(vals[pos++]);
+				param.std = param.std * (Math.pow((1.0 / this.settings.newConfigurations), (1.0 / newAlgorithm.integerParameters.size())));
+			}
+			for (NominalParameter param: newAlgorithm.nominalParameters) {
+				int index = (int) vals[pos++];
+				param.numericValue = index;
+				param.value = param.range[index];
+
+				// increase probability of sampled value
+				param.probabilities.set(index, (param.probabilities.get(param.numericValue) + ((this.instancesSeen - 1) / 100)));
+
+				// divide by sum				
+				double sum = 0.0;
+				for(int i=0; i<param.probabilities.size(); i++){
+					sum += param.probabilities.get(i);
+				}
+				for(int i=0; i<param.probabilities.size(); i++){
+					param.probabilities.set(i, param.probabilities.get(i)/sum);
+				}
+				
+			}
+
+			newAlgorithm.init();
+			
+
 			// if we still have open slots in the ensemble (not full)
 			if (this.ensemble.size() < this.settings.ensembleSize) {
 				System.out.println("Ensemble not full. Add configuration as new algorithm.");
-
-				// copy existing clusterer configuration but change settings
-				// TODO maybe we should init a new one instead of copying to avoid deep copy problems
-				Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
-				for (int i = 0; i < newAlgorithm.numericalParameters.size(); i++) {
-					NumericalParameter newParam = newAlgorithm.numericalParameters.get(i);
-					newParam.value = vals[i];
-
-					// Reduce standard deviation for next iteration
-					// TODO this is not directly transferable from irace
-					newParam.std = newParam.std * (Math.pow((1.0 / this.settings.newConfigurations), (1.0 / newAlgorithm.numericalParameters.size())));
-				}
-				for (int i = 0; i < newAlgorithm.integerParameters.size(); i++) {
-					IntegerParameter newParam = newAlgorithm.integerParameters.get(i);
-					newParam.value = (int) Math.round(vals[i]);
-					newParam.std = newParam.std * (Math.pow((1.0 / this.settings.newConfigurations), (1.0 / newAlgorithm.numericalParameters.size())));
-				}
-				for (int i = 0; i < newAlgorithm.nominalParameters.size(); i++) {
-					// NominalParameter newParam = newAlgorithm.nominalParameters.get(i);
-					//TODO
-				}
-
-				newAlgorithm.init();
 
 				// add to ensemble
 				this.ensemble.add(newAlgorithm);
@@ -446,15 +499,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 				// proportionally sample a configuration that will be replaced
 				int replaceIdx = sampleProportionally(silhs);
-				System.out.println(
-						"Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
-
-				// copy existing clusterer configuration but change settings
-				Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
-				for (int i = 0; i < vals.length; i++) {
-					newAlgorithm.numericalParameters.get(i).value = vals[i];
-				}
-				newAlgorithm.init();
+				System.out.println("Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
 
 				// replace in ensemble
 				this.ensemble.set(replaceIdx, newAlgorithm);
