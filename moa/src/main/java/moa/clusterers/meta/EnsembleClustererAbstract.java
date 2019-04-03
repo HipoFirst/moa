@@ -432,9 +432,9 @@ class OrdinalParameter implements IParameter {
 
 class Algorithm {
 	public String algorithm;
-	public ArrayList<IParameter> parameters;
+	public IParameter[] parameters;
 	public Clusterer clusterer;
-	public ArrayList<Attribute> attributes;
+	public Attribute[] attributes;
 
 	// copy constructor
 	public Algorithm(Algorithm x) {
@@ -442,9 +442,9 @@ class Algorithm {
 		// make a (mostly) deep copy of the algorithm
 		this.algorithm = x.algorithm;
 		this.attributes = x.attributes; // this is a reference since we dont manipulate the attributes
-		this.parameters = new ArrayList<IParameter>(x.parameters.size());
-		for (IParameter param : x.parameters) {
-			this.parameters.add(param.duplicate());
+		this.parameters = new IParameter[x.parameters.length];
+		for (int i=0; i<x.parameters.length; i++){
+			this.parameters[i] = x.parameters[i].duplicate();
 		}
 		// init(); // we dont initialise here because we want to manipulate the
 		// parameters first
@@ -454,30 +454,31 @@ class Algorithm {
 	public Algorithm(AlgorithmConfiguration x) {
 
 		this.algorithm = x.algorithm;
-		this.parameters = new ArrayList<IParameter>();
+		this.parameters = new IParameter[x.parameters.length];
 
-		this.attributes = new ArrayList<Attribute>();
-		for (ParameterConfiguration paramConfig : x.parameters) {
+		this.attributes = new Attribute[x.parameters.length];
+		for (int i=0; i<x.parameters.length; i++) {
+			ParameterConfiguration paramConfig = x.parameters[i];
 			if (paramConfig.type.equals("numeric")) {
 				NumericalParameter param = new NumericalParameter(paramConfig);
-				this.parameters.add(param);
-				this.attributes.add(new Attribute(param.getParameter()));
+				this.parameters[i] = param;
+				this.attributes[i] = new Attribute(param.getParameter());
 			} else if (paramConfig.type.equals("integer")) {
 				IntegerParameter param = new IntegerParameter(paramConfig);
-				this.parameters.add(param);
-				this.attributes.add(new Attribute(param.getParameter()));
+				this.parameters[i] = param;
+				this.attributes[i] = new Attribute(param.getParameter());
 			} else if (paramConfig.type.equals("nominal")) {
 				CategoricalParameter param = new CategoricalParameter(paramConfig);
-				this.parameters.add(param);
-				this.attributes.add(new Attribute(param.getParameter(), Arrays.asList(param.getRange())));
+				this.parameters[i] = param;
+				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
 			} else if (paramConfig.type.equals("boolean")) {
 				BooleanParameter param = new BooleanParameter(paramConfig);
-				this.parameters.add(param);
-				this.attributes.add(new Attribute(param.getParameter(), Arrays.asList(param.getRange())));
+				this.parameters[i] = param;
+				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
 			} else if (paramConfig.type.equals("ordinal")) {
 				OrdinalParameter param = new OrdinalParameter(paramConfig);
-				this.parameters.add(param);
-				this.attributes.add(new Attribute(param.getParameter()));
+				this.parameters[i] = param;
+				this.attributes[i] = new Attribute(param.getParameter());
 			} else {
 				throw new RuntimeException("Unknown parameter type: '" + paramConfig.type
 						+ "'. Available options are 'numeric', 'integer', 'nominal', 'boolean' or 'ordinal'");
@@ -506,12 +507,12 @@ class Algorithm {
 	public void sampleNewConfig(int nbNewConfigurations) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(nbNewConfigurations, this.attributes.size());
+			param.sampleNewConfig(nbNewConfigurations, this.parameters.length);
 		}
 	}
 
 	public double[] getParamVector(int padding) {
-		double[] params = new double[this.attributes.size() + padding];
+		double[] params = new double[this.parameters.length + padding];
 		int pos = 0;
 		for (IParameter param : this.parameters) {
 			params[pos++] = param.getValue();
