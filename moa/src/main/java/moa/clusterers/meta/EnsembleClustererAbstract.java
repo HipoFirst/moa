@@ -4,12 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
-import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.DenseInstance;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
@@ -21,15 +19,14 @@ import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.SilhouetteCoefficient;
 import moa.gui.visualization.DataPoint;
-import moa.options.ClassOption;
 import moa.streams.clustering.RandomRBFGeneratorEvents;
 import moa.tasks.TaskMonitor;
 
 // The main flow is as follow:
 // A json is read which contains the main settings and starting configurations / algorithms
 // The json is used to initialize the three configuration classes below (same structure as json)
-// From the json, we create the Algorithm and Parameter classes (depending on the type) which form the ensemble of clusterers
-// These classes are then used to cluster and evaluate the algorithms
+// From the json, we create the Algorithm and Parameter classes (depending on the type of the parameter) which form the ensemble of clusterers
+// These classes are then used to cluster and evaluate the configurations
 // When a new configuration is required, a parameter configuration is copied and the parameters manipulated
 
 // these classes are initialised by gson and contain the starting configurations
@@ -55,470 +52,6 @@ class GeneralConfiguration {
 	public int ensembleSize;
 	public int newConfigurations;
 	public AlgorithmConfiguration[] algorithms;
-}
-
-// interface allows us to maintain a single list of parameters
-interface IParameter {
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable);
-
-	public IParameter copy();
-
-	public String getCLIString();
-
-	public double getValue();
-
-	public String getParameter();
-}
-
-// the representation of a numerical / real parameter
-class NumericalParameter implements IParameter {
-	private String parameter;
-	private double value;
-	private double[] range;
-	private double std;
-	private Attribute attribute;
-
-	public NumericalParameter(NumericalParameter x) {
-		this.parameter = x.parameter;
-		this.value = x.value;
-		this.range = x.range.clone();
-		this.std = x.std;
-		this.attribute = new Attribute(x.parameter);
-	}
-
-	public NumericalParameter(ParameterConfiguration x) {
-		this.parameter = x.parameter;
-		this.value = (double) x.value;
-		this.range = new double[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = (double) x.range[i];
-		}
-		this.std = (this.range[1] - this.range[0]) / 2;
-		this.attribute = new Attribute(x.parameter);
-	}
-
-	public NumericalParameter copy() {
-		return new NumericalParameter(this);
-	}
-
-	public String getCLIString() {
-		return ("-" + this.parameter + " " + this.value);
-	}
-
-	public double getValue() {
-		return this.value;
-	}
-
-	public String getParameter() {
-		return this.parameter;
-	}
-
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
-		// update configuration
-		// for numeric features use truncated normal distribution
-		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
-		double newValue = trncnormal.sample();
-
-		System.out.println("Sample new configuration for numerical parameter -" + this.parameter + " with mean: "
-				+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
-				+ this.parameter + " " + newValue);
-
-		this.value = newValue;
-
-		// adapt distribution
-		this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
-	}
-}
-
-// the representation of an integer parameter
-class IntegerParameter implements IParameter {
-	private String parameter;
-	private int value;
-	private int[] range;
-	private double std;
-	private Attribute attribute;
-
-	public IntegerParameter(IntegerParameter x) {
-		this.parameter = x.parameter;
-		this.value = x.value;
-		this.range = x.range.clone();
-		this.std = x.std;
-		this.attribute = x.attribute;// new Attribute(x.parameter);
-	}
-
-	public IntegerParameter(ParameterConfiguration x) {
-		this.parameter = x.parameter;
-		this.value = (int) (double) x.value; // TODO fix casts
-		this.range = new int[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = (int) (double) x.range[i];
-		}
-		this.std = (this.range[1] - this.range[0]) / 2;
-		this.attribute = new Attribute(x.parameter);
-	}
-
-	public IntegerParameter copy() {
-		return new IntegerParameter(this);
-	}
-
-	public String getCLIString() {
-		return ("-" + this.parameter + " " + this.value);
-	}
-
-	public double getValue() {
-		return this.value;
-	}
-
-	public String getParameter() {
-		return this.parameter;
-	}
-
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
-		// update configuration
-		// for integer features use truncated normal distribution
-		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
-		int newValue = (int) Math.round(trncnormal.sample());
-		System.out.println("Sample new configuration for integer parameter -" + this.parameter + " with mean: "
-				+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
-				+ this.parameter + " " + newValue);
-
-		this.value = newValue;
-		// adapt distribution
-		this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
-	}
-}
-
-// the representation of a categorical / nominal parameter
-class CategoricalParameter implements IParameter {
-	private String parameter;
-	private int numericValue;
-	private String value;
-	private String[] range;
-	private Attribute attribute;
-	private ArrayList<Double> probabilities;
-
-	public CategoricalParameter(CategoricalParameter x) {
-		this.parameter = x.parameter;
-		this.numericValue = x.numericValue;
-		this.value = x.value;
-		this.range = x.range.clone();
-		this.attribute = x.attribute;
-		this.probabilities = new ArrayList<Double>(x.probabilities);
-	}
-
-	public CategoricalParameter(ParameterConfiguration x) {
-		this.parameter = x.parameter;
-		this.value = String.valueOf(x.value);
-		this.range = new String[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = String.valueOf(x.range[i]);
-			if (this.range[i].equals(this.value)) {
-				this.numericValue = i; // get index of init value
-			}
-		}
-		this.attribute = new Attribute(x.parameter, Arrays.asList(range));
-		this.probabilities = new ArrayList<Double>(x.range.length);
-		for (int i = 0; i < x.range.length; i++) {
-			this.probabilities.add(1.0 / x.range.length); // equal probabilities
-		}
-	}
-
-	public CategoricalParameter copy() {
-		return new CategoricalParameter(this);
-	}
-
-	public String getCLIString() {
-		return ("-" + this.parameter + " " + this.value);
-	}
-
-	public double getValue() {
-		return this.numericValue;
-	}
-
-	public String getParameter() {
-		return this.parameter;
-	}
-
-	public String[] getRange() {
-		return this.range;
-	}
-
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
-		// update configuration
-		this.numericValue = EnsembleClustererAbstract.sampleProportionally(this.probabilities);
-		String newValue = this.range[this.numericValue];
-
-		System.out.print("Sample new configuration for nominal parameter -" + this.parameter + "with probabilities");
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			System.out.print(" " + this.probabilities.get(i));
-		}
-		System.out.println("\t=>\t -" + this.parameter + " " + newValue);
-		this.value = newValue;
-
-		// adapt distribution
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			// TODO not directly transferable, (1-((iter -1) / maxIter))
-			this.probabilities.set(i, this.probabilities.get(i) * (1.0 - ((10 - 1.0) / 100)));
-		}
-		this.probabilities.set(this.numericValue, (this.probabilities.get(this.numericValue) + ((10 - 1.0) / 100)));
-
-		// divide by sum
-		double sum = 0.0;
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			sum += this.probabilities.get(i);
-		}
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			this.probabilities.set(i, this.probabilities.get(i) / sum);
-		}
-	}
-}
-
-// the representation of a boolean / binary parameter
-class BooleanParameter implements IParameter {
-	private String parameter;
-	private int numericValue;
-	private String value;
-	private String[] range = { "false", "true" };
-	private Attribute attribute;
-	private ArrayList<Double> probabilities;
-
-	public BooleanParameter(BooleanParameter x) {
-		this.parameter = x.parameter;
-		this.numericValue = x.numericValue;
-		this.value = x.value;
-		this.range = x.range.clone();
-		this.attribute = x.attribute;
-		this.probabilities = new ArrayList<Double>(x.probabilities);
-	}
-
-	public BooleanParameter(ParameterConfiguration x) {
-		this.parameter = x.parameter;
-		this.value = String.valueOf(x.value);
-		for (int i = 0; i < this.range.length; i++) {
-			if (this.range[i].equals(this.value)) {
-				this.numericValue = i; // get index of init value
-			}
-		}
-		this.attribute = new Attribute(x.parameter);
-
-		this.probabilities = new ArrayList<Double>(2);
-		for (int i = 0; i < 2; i++) {
-			this.probabilities.add(0.5); // equal probabilities
-		}
-	}
-
-	public BooleanParameter copy() {
-		return new BooleanParameter(this);
-	}
-
-	public String getCLIString() {
-		// if option is set
-		if (this.numericValue == 1) {
-			return ("-" + this.parameter); // only the parameter
-		}
-		return "";
-	}
-
-	public double getValue() {
-		return this.numericValue;
-	}
-
-	public String getParameter() {
-		return this.parameter;
-	}
-
-	public String[] getRange() {
-		return this.range;
-	}
-
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
-		// update configuration
-		this.numericValue = EnsembleClustererAbstract.sampleProportionally(this.probabilities);
-		String newValue = this.range[this.numericValue];
-		System.out.print("Sample new configuration for boolean parameter -" + this.parameter + " with probabilities");
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			System.out.print(" " + this.probabilities.get(i));
-		}
-		System.out.println("\t=>\t -" + this.parameter + " " + newValue);
-		this.value = newValue;
-
-		// adapt distribution
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			// TODO not directly transferable, (1-((iter -1) / maxIter))
-			this.probabilities.set(i, this.probabilities.get(i) * (1.0 - ((10 - 1.0) / 100)));
-		}
-		this.probabilities.set(this.numericValue, (this.probabilities.get(this.numericValue) + ((10 - 1.0) / 100)));
-
-		// divide by sum
-		double sum = 0.0;
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			sum += this.probabilities.get(i);
-		}
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			this.probabilities.set(i, this.probabilities.get(i) / sum);
-		}
-	}
-}
-
-// the representation of an integer parameter
-class OrdinalParameter implements IParameter {
-	private String parameter;
-	private String value;
-	private int numericValue;
-	private String[] range;
-	private double std;
-	private Attribute attribute;
-
-	// copy constructor
-	public OrdinalParameter(OrdinalParameter x) {
-		this.parameter = x.parameter;
-		this.value = x.value;
-		this.numericValue = x.numericValue;
-		this.range = x.range.clone();
-		this.std = x.std;
-		this.attribute = x.attribute;
-	}
-
-	public OrdinalParameter copy() {
-		return new OrdinalParameter(this);
-	}
-
-	public String getCLIString() {
-		return ("-" + this.parameter + " " + this.value);
-	}
-
-	public double getValue() {
-		return this.numericValue;
-	}
-
-	public String getParameter() {
-		return this.parameter;
-	}
-
-	// init constructor
-	public OrdinalParameter(ParameterConfiguration x) {
-		this.parameter = x.parameter;
-		this.value = String.valueOf(x.value);
-		this.range = new String[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = String.valueOf(x.range[i]);
-			if (this.range[i].equals(this.value)) {
-				this.numericValue = i; // get index of init value
-			}
-		}
-		this.std = (this.range.length - 0) / 2;
-		this.attribute = new Attribute(x.parameter);
-
-	}
-
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
-		// update configuration
-		// treat index of range as integer parameter
-		TruncatedNormal trncnormal = new TruncatedNormal(this.numericValue, this.std, (double) (this.range.length - 1),
-				0.0); // limits are the indexes of the range
-		int newValue = (int) Math.round(trncnormal.sample());
-		System.out.println("Sample new configuration for ordinal parameter -" + this.parameter + " with mean: "
-				+ this.numericValue + ", std: " + this.std + ", lb: " + 0 + ", ub: " + (this.range.length - 1)
-				+ "\t=>\t -" + this.parameter + " " + this.range[newValue] + " (" + newValue + ")");
-
-		this.numericValue = newValue;
-		this.value = this.range[this.numericValue];
-
-		// adapt distribution
-		this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
-	}
-
-}
-
-class Algorithm {
-	public String algorithm;
-	public IParameter[] parameters;
-	public Clusterer clusterer;
-	public Attribute[] attributes;
-
-	// copy constructor
-	public Algorithm(Algorithm x) {
-
-		// make a (mostly) deep copy of the algorithm
-		this.algorithm = x.algorithm;
-		this.attributes = x.attributes; // this is a reference since we dont manipulate the attributes
-		this.parameters = new IParameter[x.parameters.length];
-		for (int i=0; i<x.parameters.length; i++){
-			this.parameters[i] = x.parameters[i].copy();
-		}
-		// init(); // we dont initialise here because we want to manipulate the
-		// parameters first
-	}
-
-	// init constructor
-	public Algorithm(AlgorithmConfiguration x) {
-
-		this.algorithm = x.algorithm;
-		this.parameters = new IParameter[x.parameters.length];
-
-		this.attributes = new Attribute[x.parameters.length];
-		for (int i=0; i<x.parameters.length; i++) {
-			ParameterConfiguration paramConfig = x.parameters[i];
-			if (paramConfig.type.equals("numeric")) {
-				NumericalParameter param = new NumericalParameter(paramConfig);
-				this.parameters[i] = param;
-				this.attributes[i] = new Attribute(param.getParameter());
-			} else if (paramConfig.type.equals("integer")) {
-				IntegerParameter param = new IntegerParameter(paramConfig);
-				this.parameters[i] = param;
-				this.attributes[i] = new Attribute(param.getParameter());
-			} else if (paramConfig.type.equals("nominal")) {
-				CategoricalParameter param = new CategoricalParameter(paramConfig);
-				this.parameters[i] = param;
-				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
-			} else if (paramConfig.type.equals("boolean")) {
-				BooleanParameter param = new BooleanParameter(paramConfig);
-				this.parameters[i] = param;
-				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
-			} else if (paramConfig.type.equals("ordinal")) {
-				OrdinalParameter param = new OrdinalParameter(paramConfig);
-				this.parameters[i] = param;
-				this.attributes[i] = new Attribute(param.getParameter());
-			} else {
-				throw new RuntimeException("Unknown parameter type: '" + paramConfig.type
-						+ "'. Available options are 'numeric', 'integer', 'nominal', 'boolean' or 'ordinal'");
-			}
-		}
-		init();
-	}
-
-	public void init() {
-		// initialise a new algorithm using the Command Line Interface (CLI)
-		// construct CLI string from settings, e.g. denstream.WithDBSCAN -e 0.08 -b 0.3
-		StringBuilder commandLine = new StringBuilder();
-		commandLine.append(this.algorithm); // first the algorithm class
-		for (IParameter param : this.parameters) {
-			commandLine.append(" ");
-			commandLine.append(param.getCLIString());
-		}
-		System.out.println("Initialise: " + commandLine.toString());
-
-		// create new clusterer from CLI string
-		ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
-		this.clusterer = (Clusterer) opt.materializeObject(null, null);
-		this.clusterer.prepareForUse();
-	}
-
-	public void sampleNewConfig(int nbNewConfigurations) {
-		// sample new configuration from the parent
-		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(nbNewConfigurations, this.parameters.length);
-		}
-	}
-
-	public double[] getParamVector(int padding) {
-		double[] params = new double[this.parameters.length + padding];
-		int pos = 0;
-		for (IParameter param : this.parameters) {
-			params[pos++] = param.getValue();
-		}
-		return params;
-	}
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -564,9 +97,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.instancesSeen = 0;
 		this.bestModel = 0;
 		this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
-		
+
 		// reset ARFrefs
-		for(AdaptiveRandomForestRegressor ARFreg: this.ARFregs.values()){
+		for (AdaptiveRandomForestRegressor ARFreg : this.ARFregs.values()) {
 			ARFreg.resetLearning();
 		}
 
@@ -578,7 +111,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	@Override
 	public void trainOnInstanceImpl(Instance inst) {
-		if(inst.classIndex() < inst.numAttributes()){ // it appears to use numAttributes as the index when no class exists
+		if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class
+														// exists
 			inst.deleteAttributeAt(inst.classIndex()); // remove class label
 		}
 		DataPoint point = new DataPoint(inst, instancesSeen); // create data points from instance
@@ -672,7 +206,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			newInst.setDataset(newDataset);
 
 			double prediction = this.ARFregs.get(newAlgorithm.algorithm).getVotesForInstance(newInst)[0];
-			System.out.println("Predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: " + prediction);
+			System.out.println("Predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class)
+					+ "\t => \t Silhouette: " + prediction);
 
 			// random forest only works with at least two training samples
 			if (Double.isNaN(prediction)) {
@@ -756,7 +291,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			}
 
 			// create or reset one regressor per algorithm
-			for(int i=0; i < this.settings.algorithms.length; i++){
+			for (int i = 0; i < this.settings.algorithms.length; i++) {
 				AdaptiveRandomForestRegressor ARFreg = new AdaptiveRandomForestRegressor();
 				ARFreg.prepareForUse();
 				this.ARFregs.put(this.settings.algorithms[i].algorithm, ARFreg);
