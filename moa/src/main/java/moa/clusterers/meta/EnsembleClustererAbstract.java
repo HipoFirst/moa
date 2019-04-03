@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.Attribute;
@@ -528,7 +530,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	int bestModel;
 	ArrayList<Algorithm> ensemble;
 	ArrayList<DataPoint> windowPoints;
-	AdaptiveRandomForestRegressor ARFreg;
+	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 
 	// the file option dialogue in the UI
@@ -561,10 +563,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.instancesSeen = 0;
 		this.bestModel = 0;
 		this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
-
-		// create or reset regressor
-		this.ARFreg = new AdaptiveRandomForestRegressor();
-		this.ARFreg.prepareForUse();
+		
+		// reset ARFrefs
+		for(AdaptiveRandomForestRegressor ARFreg: this.ARFregs.values()){
+			ARFreg.resetLearning();
+		}
 
 		// reset individual clusterers
 		for (int i = 0; i < this.ensemble.size(); i++) {
@@ -635,7 +638,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			inst.setDataset(dataset);
 
 			// train adaptive random forest regressor based on performance of model
-			this.ARFreg.trainOnInstanceImpl(inst);
+			this.ARFregs.get(this.ensemble.get(i).algorithm).trainOnInstanceImpl(inst);
 		}
 	}
 
@@ -664,7 +667,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			newDataset.setClassIndex(newDataset.numAttributes());
 			newInst.setDataset(newDataset);
 
-			double prediction = this.ARFreg.getVotesForInstance(newInst)[0];
+			double prediction = this.ARFregs.get(newAlgorithm.algorithm).getVotesForInstance(newInst)[0];
 			System.out.println("Predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: " + prediction);
 
 			// random forest only works with at least two training samples
@@ -736,12 +739,23 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// store settings in dedicated class structure
 			this.settings = gson.fromJson(bufferedReader, GeneralConfiguration.class);
 
+			this.instancesSeen = 0;
+			this.bestModel = 0;
+			this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
+
 			// also create the ensemble which can be larger than the provided (starting)
 			// configurations
 			this.ensemble = new ArrayList<Algorithm>(this.settings.ensembleSize);
 			// copy and initialise the provided starting configurations in the ensemble
 			for (int i = 0; i < this.settings.algorithms.length; i++) {
 				this.ensemble.add(new Algorithm(this.settings.algorithms[i]));
+			}
+
+			// create or reset one regressor per algorithm
+			for(int i=0; i < this.settings.algorithms.length; i++){
+				AdaptiveRandomForestRegressor ARFreg = new AdaptiveRandomForestRegressor();
+				ARFreg.prepareForUse();
+				this.ARFregs.put(this.settings.algorithms[i].algorithm, ARFreg);
 			}
 
 		} catch (

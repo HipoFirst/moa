@@ -13,10 +13,10 @@
 				// {"parameter": "o", "type"="ordinal", "value"="good", "range"=["bad","medium","good"]}
 				//,{"parameter": "n", "type"="categorical", "value"="female", "range"=["female","male"]}
 			]
-		}//,
-		// {
-		// 	"algorithm": "dstream.Dstream",
-		// 	"parameters": [{"parameter": "m", "type"="numeric", "value"=3, "min"=1, "max"=10000}, {"parameter": "l", "type"="numeric", "value"=0.8, "min"=0.001, "max"=0.999}]
-		// }
+		},
+		{
+			"algorithm": "dstream.Dstream",
+			"parameters": [{"parameter": "m", "type"="numeric", "value"=3, "range"=[1,10000]}, {"parameter": "l", "type"="numeric", "value"=0.8, "range"=[0.001,0.999]}]
+		}
 	]
 }
