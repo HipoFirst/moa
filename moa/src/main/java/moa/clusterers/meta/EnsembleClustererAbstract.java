@@ -61,7 +61,7 @@ class GeneralConfiguration {
 interface IParameter {
 	public void sampleNewConfig(int nbNewConfigurations, int nbVariable);
 
-	public IParameter duplicate();
+	public IParameter copy();
 
 	public String getCLIString();
 
@@ -97,7 +97,7 @@ class NumericalParameter implements IParameter {
 		this.attribute = new Attribute(x.parameter);
 	}
 
-	public NumericalParameter duplicate() {
+	public NumericalParameter copy() {
 		return new NumericalParameter(this);
 	}
 
@@ -157,7 +157,7 @@ class IntegerParameter implements IParameter {
 		this.attribute = new Attribute(x.parameter);
 	}
 
-	public IntegerParameter duplicate() {
+	public IntegerParameter copy() {
 		return new IntegerParameter(this);
 	}
 
@@ -223,7 +223,7 @@ class CategoricalParameter implements IParameter {
 		}
 	}
 
-	public CategoricalParameter duplicate() {
+	public CategoricalParameter copy() {
 		return new CategoricalParameter(this);
 	}
 
@@ -307,7 +307,7 @@ class BooleanParameter implements IParameter {
 		}
 	}
 
-	public BooleanParameter duplicate() {
+	public BooleanParameter copy() {
 		return new BooleanParameter(this);
 	}
 
@@ -379,7 +379,7 @@ class OrdinalParameter implements IParameter {
 		this.attribute = x.attribute;
 	}
 
-	public OrdinalParameter duplicate() {
+	public OrdinalParameter copy() {
 		return new OrdinalParameter(this);
 	}
 
@@ -444,7 +444,7 @@ class Algorithm {
 		this.attributes = x.attributes; // this is a reference since we dont manipulate the attributes
 		this.parameters = new IParameter[x.parameters.length];
 		for (int i=0; i<x.parameters.length; i++){
-			this.parameters[i] = x.parameters[i].duplicate();
+			this.parameters[i] = x.parameters[i].copy();
 		}
 		// init(); // we dont initialise here because we want to manipulate the
 		// parameters first
@@ -578,6 +578,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	@Override
 	public void trainOnInstanceImpl(Instance inst) {
+		if(inst.classIndex() < inst.numAttributes()){ // it appears to use numAttributes as the index when no class exists
+			inst.deleteAttributeAt(inst.classIndex()); // remove class label
+		}
 		DataPoint point = new DataPoint(inst, instancesSeen); // create data points from instance
 		this.windowPoints.add(point); // remember points of the current window
 		this.instancesSeen++;
