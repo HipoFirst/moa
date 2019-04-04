@@ -23,6 +23,8 @@ public class Algorithm {
 		for (int i=0; i<x.parameters.length; i++){
 			this.parameters[i] = x.parameters[i].copy();
 		}
+		// this.clusterer = x.clusterer.copy();
+		
 		// init(); // we dont initialise here because we want to manipulate the
 		// parameters first
 	}

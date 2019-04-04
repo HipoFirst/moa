@@ -126,7 +126,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		// every windowSize we update the configurations
 		if (this.instancesSeen % this.settings.windowSize == 0) {
-			System.out.println("\n-------------- Processed " + instancesSeen + " Instances --------------");
+			System.out.println(" ");
+			System.out.println(" ");
+			System.out.println("-------------- Processed " + instancesSeen + " Instances --------------");
 			updateConfiguration(); // update configuration
 			windowPoints.clear(); // flush the current window
 		}
@@ -137,9 +139,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		SilhouetteCoefficient silh = new SilhouetteCoefficient();
 		// train the random forest regressor based on the configuration performance
 		// and find the best performing algorithm
+		System.out.println(" ");
+		System.out.println("---- Evaluate performance of current ensemble:");
 		evaluatePerformance(silh);
 
-		System.out.println("Clusterer " + this.bestModel + " is the active clusterer.");
+		System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
 
 		// generate a new configuration and predict its performance using the random
 		// forest regressor
@@ -150,14 +154,17 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		double maxVal = -1 * Double.MAX_VALUE;
 		for (int i = 0; i < this.ensemble.size(); i++) {
-			// get macro clusters of this clusterer
-			Clustering result = this.ensemble.get(i).clusterer.getClusteringResult();
+			// get micro clusters of this clusterer
+			Clustering result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
+			if(result == null){
+				throw new RuntimeException("Micro clusters not available for "  + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
+			}
 
 			// evaluate clustering using silhouette width
 			silh.evaluateClustering(result, null, windowPoints);
 			double performance = silh.getLastValue(0);
 			System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
-					+ ":\t => \t Silhouette: " + performance);
+					+ "\t => \t Silhouette: " + performance);
 
 			// find best clustering result among all algorithms
 			if (performance > maxVal) {
@@ -189,6 +196,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
+			System.out.println(" ");
+			System.out.println("---- Sample new configuration " + z + ":");
+
 			// copy existing clusterer configuration
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(silhs);
 			System.out.println("Selected Configuration " + parentIdx + " as parent: "
@@ -205,6 +215,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			newDataset.setClassIndex(newDataset.numAttributes());
 			newInst.setDataset(newDataset);
 
+			System.out.println(" ");
+			System.out.println("---- Predict performance of new configuration:");
 			double prediction = this.ARFregs.get(newAlgorithm.algorithm).getVotesForInstance(newInst)[0];
 			System.out.println("Predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class)
 					+ "\t => \t Silhouette: " + prediction);
