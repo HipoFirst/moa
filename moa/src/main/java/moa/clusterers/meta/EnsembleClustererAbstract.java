@@ -60,6 +60,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	int iteration;
 	int instancesSeen;
+	int iter;
 	int currentEnsembleSize;
 	int bestModel;
 	ArrayList<Algorithm> ensemble;
@@ -96,6 +97,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		this.instancesSeen = 0;
 		this.bestModel = 0;
+		this.iter = 0;
 		this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
 
 		// reset ARFrefs
@@ -130,7 +132,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			System.out.println(" ");
 			System.out.println("-------------- Processed " + instancesSeen + " Instances --------------");
 			updateConfiguration(); // update configuration
-			windowPoints.clear(); // flush the current window
 		}
 	}
 
@@ -148,6 +149,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// generate a new configuration and predict its performance using the random
 		// forest regressor
 		predictConfiguration(silh);
+
+		this.windowPoints.clear(); // flush the current window
+		this.iter++;
 	}
 
 	protected void evaluatePerformance(SilhouetteCoefficient silh) {
@@ -156,8 +160,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		for (int i = 0; i < this.ensemble.size(); i++) {
 			// get micro clusters of this clusterer
 			Clustering result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
-			if(result == null){
-				throw new RuntimeException("Micro clusters not available for "  + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
+			if (result == null) {
+				throw new RuntimeException("Micro clusters not available for "
+						+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
 			}
 
 			// evaluate clustering using silhouette width
@@ -206,7 +211,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
 
 			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.settings.newConfigurations);
+			newAlgorithm.sampleNewConfig(this.iter, this.settings.newConfigurations);
 			newAlgorithm.init();
 
 			double[] params = newAlgorithm.getParamVector(0);
@@ -292,6 +297,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			this.instancesSeen = 0;
 			this.bestModel = 0;
+			this.iter = 0;
 			this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
 
 			// also create the ensemble which can be larger than the provided (starting)

@@ -83,10 +83,10 @@ public class Algorithm {
 		this.clusterer.prepareForUse();
 	}
 
-	public void sampleNewConfig(int nbNewConfigurations) {
+	public void sampleNewConfig(int iter, int nbNewConfigurations) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(nbNewConfigurations, this.parameters.length);
+			param.sampleNewConfig(iter, nbNewConfigurations, this.parameters.length);
 		}
 	}
 

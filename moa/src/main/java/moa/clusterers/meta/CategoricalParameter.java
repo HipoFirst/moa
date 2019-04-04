@@ -60,7 +60,7 @@ public class CategoricalParameter implements IParameter {
 		return this.range;
 	}
 
-	public void sampleNewConfig(int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(int iter, int nbNewConfigurations, int nbVariable) {
 		// update configuration
 		this.numericValue = EnsembleClustererAbstract.sampleProportionally(this.probabilities);
 		String newValue = this.range[this.numericValue];
@@ -73,11 +73,12 @@ public class CategoricalParameter implements IParameter {
 		this.value = newValue;
 
 		// adapt distribution
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			// TODO not directly transferable, (1-((iter -1) / maxIter))
-			this.probabilities.set(i, this.probabilities.get(i) * (1.0 - ((10 - 1.0) / 100)));
-		}
-		this.probabilities.set(this.numericValue, (this.probabilities.get(this.numericValue) + ((10 - 1.0) / 100)));
+		// for (int i = 0; i < this.probabilities.size(); i++) {
+		// 	// TODO not directly transferable, (1-((iter -1) / maxIter))
+		// 	this.probabilities.set(i, this.probabilities.get(i) * (1.0 - ((10 - 1.0) / 100)));
+		// }
+		// this.probabilities.set(this.numericValue, (this.probabilities.get(this.numericValue) + ((10 - 1.0) / 100)));
+		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
 
 		// divide by sum
 		double sum = 0.0;
