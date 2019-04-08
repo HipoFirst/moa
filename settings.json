@@ -10,9 +10,6 @@
 				{"parameter": "b", "type":"numeric", "value":0.3, "range":[0,1]}, 
 				{"parameter": "i", "type":"integer", "value":1200, "range":[1,10000]},
 				{"parameter": "M", "type":"boolean", "value":"true"}
-				//,
-				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]}
-				//,{"parameter": "n", "type":"categorical", "value":"female", "range":["female","male"]}
 			]
 		},
 		{
@@ -23,13 +20,5 @@
 				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
 			]
 		}
-		// ,
-		// {
-		// 	"algorithm": "dstream.Dstream",
-		// 	"parameters": [
-		// 		{"parameter": "m", "type":"numeric", "value":2, "range":[1,10000]}, 
-		// 		{"parameter": "l", "type":"numeric", "value":0.9, "range":[0.001,0.999]}
-		// 	]
-		// }
 	]
 }
