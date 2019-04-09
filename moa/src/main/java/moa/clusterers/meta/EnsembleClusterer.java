@@ -9,7 +9,7 @@ public class EnsembleClusterer extends EnsembleClustererAbstract{
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public Clustering getClusteringResult() {	
+	public Clustering getMicroClusteringResult() {	
 		return this.getEnsembleResult();
 	}
 

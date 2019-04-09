@@ -1,11 +1,14 @@
 package moa.clusterers.meta;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.github.javacliparser.ClassOption;
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.DenseInstance;
@@ -15,6 +18,8 @@ import moa.classifiers.meta.AdaptiveRandomForestRegressor;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
+import moa.clusterers.clustream.WithKmeans;
+import moa.clusterers.denstream.WithDBSCAN;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.SilhouetteCoefficient;
@@ -62,9 +67,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	int instancesSeen;
 	int iter;
 	int currentEnsembleSize;
-	int bestModel;
-	ArrayList<Algorithm> ensemble;
-	ArrayList<DataPoint> windowPoints;
+	public int bestModel;
+	public ArrayList<Algorithm> ensemble;
+	public ArrayList<DataPoint> windowPoints;
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 
@@ -160,16 +165,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		for (int i = 0; i < this.ensemble.size(); i++) {
 			// get micro clusters of this clusterer
 			Clustering result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
+			double performance;
 			if (result == null) {
 				throw new RuntimeException("Micro clusters not available for "
 						+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
+			} else if(result.size() == 0 || result.size()==1){
+				performance = -1; // discourage solutions with no or a single cluster
+			} else{
+				// evaluate clustering using silhouette width
+				silh.evaluateClustering(result, null, windowPoints);
+				performance = silh.getLastValue(0);
 			}
-
-			// evaluate clustering using silhouette width
-			silh.evaluateClustering(result, null, windowPoints);
-			double performance = silh.getLastValue(0);
-			System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
-					+ "\t => \t Silhouette: " + performance);
+				
+			System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: " + performance);
 
 			// find best clustering result among all algorithms
 			if (performance > maxVal) {
@@ -324,31 +332,111 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	}
 
-	public static void main(String[] args) {
-		EnsembleClustererBlast algorithm = new EnsembleClustererBlast();
+	public static void main(String[] args) throws FileNotFoundException {
+
+		// EnsembleClustererBlast algorithm = new EnsembleClustererBlast();
+		// RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
+		// stream.prepareForUse();
+		// algorithm.prepareForUse();
+		// for (int i = 0; i < 1000000; i++) {
+		// Instance inst = stream.nextInstance().getData();
+		// algorithm.trainOnInstanceImpl(inst);
+		// }
+		// algorithm.getClusteringResult();
+
+		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
+		// algorithms.add(new EnsembleClustererBlast());
+		// algorithms.add(new EnsembleClusterer());
+		algorithms.add(new WithDBSCAN());
+		algorithms.add(new WithKmeans());
+
 		RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
 		stream.prepareForUse();
-		algorithm.prepareForUse();
-		for (int i = 0; i < 1000000; i++) {
+
+		int windowSize = 1000;
+
+		EnsembleClustererBlast blast = new EnsembleClustererBlast();
+		blast.prepareForUse();
+		stream.restart();
+		File f = new File(
+				"result_" + ClassOption.stripPackagePrefix(blast.getClass().getName(), Clusterer.class) + ".txt");
+		PrintWriter pw = new PrintWriter(f);
+		pw.print("points\tsilhouette");
+		Algorithm algorithm = blast.ensemble.get(blast.bestModel);
+		for (int j = 0; j < algorithm.parameters.length; j++) {
+			pw.print("\t" + algorithm.parameters[j].getParameter());
+		}
+		pw.println("");
+
+		ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
+		for (int j = 0; j < 100000; j++) {
 			Instance inst = stream.nextInstance().getData();
-			algorithm.trainOnInstanceImpl(inst);
+			if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class exists
+				inst.deleteAttributeAt(inst.classIndex()); // remove class label
+			}
+			DataPoint point = new DataPoint(inst, j);
+			windowPoints.add(point);
+			blast.trainOnInstanceImpl(inst);
+			if ((j+1) % windowSize == 0) {
+				SilhouetteCoefficient silh = new SilhouetteCoefficient();
+				Clustering result = blast.getMicroClusteringResult();
+				silh.evaluateClustering(result, null, windowPoints);
+
+				double sil = silh.getLastValue(0);
+				if(result.size()==0){
+					sil = Double.NaN;
+				}
+
+				pw.print(j);
+				pw.print("\t");
+				pw.print(sil);
+
+				algorithm = blast.ensemble.get(blast.bestModel);
+				for (int k = 0; k < algorithm.parameters.length; k++) {
+					pw.print("\t" + algorithm.parameters[k].getValue());
+				}
+				pw.println("");
+
+				windowPoints.clear();
+				pw.flush();
+			}
 		}
-		algorithm.getClusteringResult();
+		pw.close();
 
-		System.out.println("-------------");
+		for (int i = 0; i < algorithms.size(); i++) {
+			algorithms.get(i).prepareForUse();
+			stream.restart();
+			f = new File("result_"
+					+ ClassOption.stripPackagePrefix(algorithms.get(i).getClass().getName(), Clusterer.class) + ".txt");
+			pw = new PrintWriter(f);
+			pw.println("points\tsilhouette");
 
-		EnsembleClusterer algorithm2 = new EnsembleClusterer();
-		RandomRBFGeneratorEvents stream2 = new RandomRBFGeneratorEvents();
-		stream2.prepareForUse();
-		algorithm2.prepareForUse();
-		for (int i = 0; i < 1000000; i++) {
-			Instance inst = stream2.nextInstance().getData();
-			algorithm2.trainOnInstanceImpl(inst);
+			windowPoints = new ArrayList<DataPoint>(windowSize);
+			for (int j = 0; j < 100000; j++) {
+				Instance inst = stream.nextInstance().getData();
+				if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class exists
+					inst.deleteAttributeAt(inst.classIndex()); // remove class label
+				}
+				DataPoint point = new DataPoint(inst, j);
+				windowPoints.add(point);
+				algorithms.get(i).trainOnInstanceImpl(inst);
+				if ((j+1) % windowSize == 0) {
+
+					SilhouetteCoefficient silh = new SilhouetteCoefficient();
+					Clustering result = algorithms.get(i).getMicroClusteringResult();
+					silh.evaluateClustering(result, null, windowPoints);
+
+					pw.print(j);
+					pw.print("\t");
+					pw.println(silh.getLastValue(0));
+
+					windowPoints.clear();
+					pw.flush();
+				}
+			}
+			pw.close();
 		}
-		algorithm2.getClusteringResult();
-
 	}
-
 }
 // System.out.println(ClassOption.stripPackagePrefix(this.ensemble[i].getClass().getName(),
 // Clusterer.class)); // print class
