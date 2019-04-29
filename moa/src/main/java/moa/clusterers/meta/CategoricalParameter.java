@@ -47,6 +47,10 @@ public class CategoricalParameter implements IParameter {
 	public String getCLIString() {
 		return ("-" + this.parameter + " " + this.value);
 	}
+	
+	public String getCLIValueString() {
+		return ("" + this.value);
+	}
 
 	public double getValue() {
 		return this.numericValue;

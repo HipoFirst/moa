@@ -2,6 +2,8 @@ package moa.clusterers.meta;
 
 import java.util.Arrays;
 
+import com.github.javacliparser.Option;
+import com.github.javacliparser.Options;
 import com.yahoo.labs.samoa.instances.Attribute;
 
 import moa.clusterers.Clusterer;
@@ -14,7 +16,7 @@ public class Algorithm {
 	public Attribute[] attributes;
 
 	// copy constructor
-	public Algorithm(Algorithm x) {
+	public Algorithm(Algorithm x, boolean keepCurrentModel) {
 
 		// make a (mostly) deep copy of the algorithm
 		this.algorithm = x.algorithm;
@@ -23,10 +25,9 @@ public class Algorithm {
 		for (int i=0; i<x.parameters.length; i++){
 			this.parameters[i] = x.parameters[i].copy();
 		}
-		// this.clusterer = x.clusterer.copy();
-		
-		// init(); // we dont initialise here because we want to manipulate the
-		// parameters first
+		if(keepCurrentModel){
+			this.clusterer = x.clusterer.copy();
+		}
 	}
 
 	// init constructor
@@ -75,7 +76,6 @@ public class Algorithm {
 			commandLine.append(" ");
 			commandLine.append(param.getCLIString());
 		}
-		System.out.println("Initialise: " + commandLine.toString());
 
 		// create new clusterer from CLI string
 		ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
@@ -83,10 +83,31 @@ public class Algorithm {
 		this.clusterer.prepareForUse();
 	}
 
-	public void sampleNewConfig(int iter, int nbNewConfigurations) {
+	public void sampleNewConfig(int iter, int nbNewConfigurations, boolean keepCurrentModel) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
 			param.sampleNewConfig(iter, nbNewConfigurations, this.parameters.length);
+		}
+		
+
+		if(keepCurrentModel){
+			// keep the old state and just change parameter
+			// TODO this does not transfer over since most (all?) algorithms chache the option values
+			StringBuilder commandLine = new StringBuilder();
+			for (IParameter param : this.parameters) {
+				commandLine.append(param.getCLIString());
+			}
+
+			Options opts = this.clusterer.getOptions();
+			for(IParameter param : this.parameters){
+				Option opt = opts.getOption(param.getParameter().charAt(0));
+				opt.setValueViaCLIString(param.getCLIValueString());
+			}
+			System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
+		} else{
+			// reinitialise the entire state
+			this.init();
+			System.out.println("Initialise: " + this.clusterer.getCLICreationString(Clusterer.class));
 		}
 	}
 

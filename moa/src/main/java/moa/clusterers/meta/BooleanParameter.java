@@ -50,6 +50,15 @@ public class BooleanParameter implements IParameter {
 		return "";
 	}
 
+	public String getCLIValueString() {
+		if(this.numericValue == 1){
+			return ("");
+		} else{
+			return(null);
+		}
+	}
+
+
 	public double getValue() {
 		return this.numericValue;
 	}

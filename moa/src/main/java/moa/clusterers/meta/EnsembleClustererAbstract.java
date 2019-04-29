@@ -1,25 +1,21 @@
 package moa.clusterers.meta;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.github.javacliparser.ClassOption;
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.DenseInstance;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
+
 import moa.classifiers.meta.AdaptiveRandomForestRegressor;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
-import moa.clusterers.clustream.WithKmeans;
-import moa.clusterers.denstream.WithDBSCAN;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.SilhouetteCoefficient;
@@ -57,6 +53,7 @@ class GeneralConfiguration {
 	public int ensembleSize;
 	public int newConfigurations;
 	public AlgorithmConfiguration[] algorithms;
+	public boolean keepCurrentModel;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -72,6 +69,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	public ArrayList<DataPoint> windowPoints;
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
+	SilhouetteCoefficient silhouette;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -142,24 +140,24 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	protected void updateConfiguration() {
 		// init evaluation measure (silhouette for now)
-		SilhouetteCoefficient silh = new SilhouetteCoefficient();
+		this.silhouette = new SilhouetteCoefficient();
 		// train the random forest regressor based on the configuration performance
 		// and find the best performing algorithm
 		System.out.println(" ");
 		System.out.println("---- Evaluate performance of current ensemble:");
-		evaluatePerformance(silh);
+		evaluatePerformance();
 
 		System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
 
 		// generate a new configuration and predict its performance using the random
 		// forest regressor
-		predictConfiguration(silh);
+		predictConfiguration();
 
 		this.windowPoints.clear(); // flush the current window
 		this.iter++;
 	}
 
-	protected void evaluatePerformance(SilhouetteCoefficient silh) {
+	protected void evaluatePerformance() {
 
 		double maxVal = -1 * Double.MAX_VALUE;
 		for (int i = 0; i < this.ensemble.size(); i++) {
@@ -169,15 +167,17 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			if (result == null) {
 				throw new RuntimeException("Micro clusters not available for "
 						+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
-			} else if(result.size() == 0 || result.size()==1){
+			} else if (result.size() == 0 || result.size() == 1) {
 				performance = -1; // discourage solutions with no or a single cluster
-			} else{
+				this.silhouette.addValue(0, performance);				
+			} else {
 				// evaluate clustering using silhouette width
-				silh.evaluateClustering(result, null, windowPoints);
-				performance = silh.getLastValue(0);
+				this.silhouette.evaluateClustering(result, null, windowPoints);
+				performance = this.silhouette.getLastValue(0);
 			}
-				
-			System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: " + performance);
+
+			System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
+					+ "\t => \t Silhouette: " + performance);
 
 			// find best clustering result among all algorithms
 			if (performance > maxVal) {
@@ -201,11 +201,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	}
 
 	// predict performance of new configuration
-	protected void predictConfiguration(SilhouetteCoefficient silh) {
+	protected void predictConfiguration() {
 
 		// sample a parent configuration proportionally to its performance from the
 		// ensemble
-		ArrayList<Double> silhs = silh.getAllValues(0);
+		ArrayList<Double> silhs = this.silhouette.getAllValues(0);
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
@@ -216,11 +216,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(silhs);
 			System.out.println("Selected Configuration " + parentIdx + " as parent: "
 					+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
-			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx));
+			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel);
 
 			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.iter, this.settings.newConfigurations);
-			newAlgorithm.init();
+			newAlgorithm.sampleNewConfig(this.iter, this.settings.newConfigurations, this.settings.keepCurrentModel);
 
 			double[] params = newAlgorithm.getParamVector(0);
 			Instance newInst = new DenseInstance(1.0, params);
@@ -249,7 +248,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				// update current silhouettes with the prediction
 				silhs.add(prediction);
 
-			} else if (prediction > silh.getMinValue(0)) {
+			} else if (prediction > this.silhouette.getMinValue(0)) {
 				// if the predicted performance is better than the one we have in the ensemble
 
 				// proportionally sample a configuration that will be replaced
@@ -262,6 +261,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 				// update current silhouettes with the prediction
 				silhs.set(replaceIdx, prediction);
+			} else{
+				System.out.println(
+					"Ensemble full and new configuration is not promising! Discard Solution.");
 			}
 		}
 

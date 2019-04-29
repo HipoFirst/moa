@@ -29,6 +29,10 @@ public class OrdinalParameter implements IParameter {
 		return ("-" + this.parameter + " " + this.value);
 	}
 
+	public String getCLIValueString() {
+		return ("" + this.value);
+	}
+
 	public double getValue() {
 		return this.numericValue;
 	}

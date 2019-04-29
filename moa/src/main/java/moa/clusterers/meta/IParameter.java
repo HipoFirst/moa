@@ -8,6 +8,8 @@ public interface IParameter {
 
 	public String getCLIString();
 
+	public String getCLIValueString();
+
 	public double getValue();
 
 	public String getParameter();
