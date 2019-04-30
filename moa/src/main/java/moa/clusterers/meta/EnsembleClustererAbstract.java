@@ -1,11 +1,14 @@
 package moa.clusterers.meta;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.github.javacliparser.ClassOption;
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
 import com.yahoo.labs.samoa.instances.DenseInstance;
@@ -16,6 +19,8 @@ import moa.classifiers.meta.AdaptiveRandomForestRegressor;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
+import moa.clusterers.clustream.WithKmeans;
+import moa.clusterers.denstream.WithDBSCAN;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.SilhouetteCoefficient;
@@ -169,7 +174,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
 			} else if (result.size() == 0 || result.size() == 1) {
 				performance = -1; // discourage solutions with no or a single cluster
-				this.silhouette.addValue(0, performance);				
+				this.silhouette.addValue(0, performance);
 			} else {
 				// evaluate clustering using silhouette width
 				this.silhouette.evaluateClustering(result, null, windowPoints);
@@ -251,36 +256,53 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			} else if (prediction > this.silhouette.getMinValue(0)) {
 				// if the predicted performance is better than the one we have in the ensemble
 
-				// proportionally sample a configuration that will be replaced
-				int replaceIdx = EnsembleClustererAbstract.sampleProportionally(silhs);
+				// proportionally sample a configuration that will be replaced, do not sample
+				// the incumbent
+				int replaceIdx = EnsembleClustererAbstract.sampleInvertProportionally(silhs, this.bestModel);
+
+				// update current silhouettes with the prediction
+				silhs.set(replaceIdx, prediction);
+
 				System.out.println(
 						"Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
 
 				// replace in ensemble
 				this.ensemble.set(replaceIdx, newAlgorithm);
-
-				// update current silhouettes with the prediction
-				silhs.set(replaceIdx, prediction);
-			} else{
-				System.out.println(
-					"Ensemble full and new configuration is not promising! Discard Solution.");
+			} else {
+				System.out.println("Ensemble full and new configuration is not promising! Discard Solution.");
 			}
 		}
 
 	}
 
+	static int sampleInvertProportionally(ArrayList<Double> values, int exclude) {
+
+		ArrayList<Double> vals = new ArrayList<Double>(values.size());
+
+		for (int i = 0; i < values.size(); i++) {
+			vals.add(-1 * values.get(i));
+		}
+		vals.set(exclude, -1.0); // this effectively removes it from the sampling
+
+		return (EnsembleClustererAbstract.sampleProportionally(vals));
+
+	}
+
 	// sample an index from a list of values, proportionally to the respective value
 	static int sampleProportionally(ArrayList<Double> values) {
+
 		double completeWeight = 0.0;
-		for (Double value : values)
-			completeWeight += value;
+		for (Double value : values) {
+			completeWeight += value + 1; // +1 to change from [-1,1] to [0,2]
+		}
 
 		double r = Math.random() * completeWeight;
 		double countWeight = 0.0;
 		for (int j = 0; j < values.size(); j++) {
-			countWeight += values.get(j);
-			if (countWeight >= r)
+			countWeight += values.get(j) + 1;
+			if (countWeight >= r) {
 				return j;
+			}
 		}
 		throw new RuntimeException("Sampling failed");
 	}
@@ -336,7 +358,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	public static void main(String[] args) throws FileNotFoundException {
 
-		// EnsembleClustererBlast algorithm = new EnsembleClustererBlast();
+		// EnsembleClusterer algorithm = new EnsembleClusterer();
 		// RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
 		// stream.prepareForUse();
 		// algorithm.prepareForUse();
@@ -373,19 +395,20 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
 		for (int j = 0; j < 100000; j++) {
 			Instance inst = stream.nextInstance().getData();
-			if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class exists
+			if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no
+															// class exists
 				inst.deleteAttributeAt(inst.classIndex()); // remove class label
 			}
 			DataPoint point = new DataPoint(inst, j);
 			windowPoints.add(point);
 			blast.trainOnInstanceImpl(inst);
-			if ((j+1) % windowSize == 0) {
+			if ((j + 1) % windowSize == 0) {
 				SilhouetteCoefficient silh = new SilhouetteCoefficient();
 				Clustering result = blast.getMicroClusteringResult();
 				silh.evaluateClustering(result, null, windowPoints);
 
 				double sil = silh.getLastValue(0);
-				if(result.size()==0){
+				if (result.size() == 0 || result.size() == 1) {
 					sil = Double.NaN;
 				}
 
@@ -416,13 +439,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			windowPoints = new ArrayList<DataPoint>(windowSize);
 			for (int j = 0; j < 100000; j++) {
 				Instance inst = stream.nextInstance().getData();
-				if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class exists
+				if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no
+																// class exists
 					inst.deleteAttributeAt(inst.classIndex()); // remove class label
 				}
 				DataPoint point = new DataPoint(inst, j);
 				windowPoints.add(point);
 				algorithms.get(i).trainOnInstanceImpl(inst);
-				if ((j+1) % windowSize == 0) {
+				if ((j + 1) % windowSize == 0) {
 
 					SilhouetteCoefficient silh = new SilhouetteCoefficient();
 					Clustering result = algorithms.get(i).getMicroClusteringResult();

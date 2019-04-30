@@ -1,21 +1,22 @@
 {
-	"windowSize": 5000,
-	"ensembleSize": 5,
-	"newConfigurations": 2,
+	"windowSize": 1000,
+	"ensembleSize": 10,
+	"newConfigurations": 1,
+	"keepCurrentModel": "false",
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
 			"parameters": [
-				{"parameter": "e", "type":"numeric", "value":0.08, "range":[0,1]}, 
-				{"parameter": "b", "type":"numeric", "value":0.3, "range":[0,1]}, 
-				{"parameter": "i", "type":"integer", "value":1200, "range":[1,10000]},
-				{"parameter": "M", "type":"boolean", "value":"true"}
+				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]}, 
+				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]}, 
+				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]}, 
+				{"parameter": "i", "type":"integer", "value":1000, "range":[1,10000]}
 			]
-		},
+		}
+		,
 		{
 			"algorithm": "clustream.WithKmeans",
 			"parameters": [
-				{"parameter": "h", "type":"integer", "value":1000, "range":[1,10000]},
 				{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
 				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
 			]
