@@ -121,10 +121,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	@Override
 	public void trainOnInstanceImpl(Instance inst) {
+
 		if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class
 														// exists
 			inst.deleteAttributeAt(inst.classIndex()); // remove class label
 		}
+
 		DataPoint point = new DataPoint(inst, instancesSeen); // create data points from instance
 		this.windowPoints.add(point); // remember points of the current window
 		this.instancesSeen++;
@@ -141,6 +143,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			System.out.println("-------------- Processed " + instancesSeen + " Instances --------------");
 			updateConfiguration(); // update configuration
 		}
+
 	}
 
 	protected void updateConfiguration() {
@@ -258,7 +261,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 				// proportionally sample a configuration that will be replaced, do not sample
 				// the incumbent
-				int replaceIdx = EnsembleClustererAbstract.sampleInvertProportionally(silhs, this.bestModel);
+				int replaceIdx = EnsembleClustererAbstract.sampleInvertProportionally(silhs);
 
 				// update current silhouettes with the prediction
 				silhs.set(replaceIdx, prediction);
@@ -275,14 +278,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	}
 
-	static int sampleInvertProportionally(ArrayList<Double> values, int exclude) {
+	static int sampleInvertProportionally(ArrayList<Double> values) {
 
 		ArrayList<Double> vals = new ArrayList<Double>(values.size());
 
 		for (int i = 0; i < values.size(); i++) {
 			vals.add(-1 * values.get(i));
 		}
-		vals.set(exclude, -1.0); // this effectively removes it from the sampling
 
 		return (EnsembleClustererAbstract.sampleProportionally(vals));
 
@@ -291,15 +293,23 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	// sample an index from a list of values, proportionally to the respective value
 	static int sampleProportionally(ArrayList<Double> values) {
 
+		double minVal = Double.MAX_VALUE;
+		for (Double value : values) {
+			if(value < minVal){
+				minVal = value;
+			}
+		}
+		minVal = Math.abs(minVal);
+
 		double completeWeight = 0.0;
 		for (Double value : values) {
-			completeWeight += value + 1; // +1 to change from [-1,1] to [0,2]
+			completeWeight += value + minVal; // +min to have positive range
 		}
 
 		double r = Math.random() * completeWeight;
 		double countWeight = 0.0;
 		for (int j = 0; j < values.size(); j++) {
-			countWeight += values.get(j) + 1;
+			countWeight += values.get(j) + minVal;
 			if (countWeight >= r) {
 				return j;
 			}
