@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import com.yahoo.labs.samoa.instances.Attribute;
 
-// the representation of a boolean / binary parameter
+// the representation of a boolean / binary / flag parameter
 public class BooleanParameter implements IParameter {
 	private String parameter;
 	private int numericValue;

@@ -368,21 +368,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	public static void main(String[] args) throws FileNotFoundException {
 
-		// EnsembleClusterer algorithm = new EnsembleClusterer();
-		// RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
-		// stream.prepareForUse();
-		// algorithm.prepareForUse();
-		// for (int i = 0; i < 1000000; i++) {
-		// Instance inst = stream.nextInstance().getData();
-		// algorithm.trainOnInstanceImpl(inst);
-		// }
-		// algorithm.getClusteringResult();
-
-		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
-		// algorithms.add(new EnsembleClustererBlast());
-		// algorithms.add(new EnsembleClusterer());
-		algorithms.add(new WithDBSCAN());
-		algorithms.add(new WithKmeans());
 
 		RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
 		stream.prepareForUse();
@@ -437,6 +422,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			}
 		}
 		pw.close();
+
+		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
+		// algorithms.add(new EnsembleClustererBlast());
+		// algorithms.add(new EnsembleClusterer());
+		algorithms.add(new WithDBSCAN());
+		algorithms.add(new WithKmeans());
 
 		for (int i = 0; i < algorithms.size(); i++) {
 			algorithms.get(i).prepareForUse();
