@@ -25,7 +25,7 @@ public class IntegerParameter implements IParameter {
 		for (int i = 0; i < x.range.length; i++) {
 			range[i] = (int) (double) x.range[i];
 		}
-		this.std = (this.range[1] - this.range[0]) / 2;
+		this.std = (this.range[1] - this.range[0]) / 8;
 		this.attribute = new Attribute(x.parameter);
 	}
 
@@ -54,9 +54,9 @@ public class IntegerParameter implements IParameter {
 		// for integer features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
 		int newValue = (int) Math.round(trncnormal.sample());
-		System.out.println("Sample new configuration for integer parameter -" + this.parameter + " with mean: "
-				+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
-				+ this.parameter + " " + newValue);
+		// System.out.println("Sample new configuration for integer parameter -" + this.parameter + " with mean: "
+		// 		+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
+		// 		+ this.parameter + " " + newValue);
 
 		this.value = newValue;
 		// adapt distribution

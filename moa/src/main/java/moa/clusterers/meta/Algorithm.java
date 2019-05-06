@@ -103,11 +103,11 @@ public class Algorithm {
 				Option opt = opts.getOption(param.getParameter().charAt(0));
 				opt.setValueViaCLIString(param.getCLIValueString());
 			}
-			System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
+			// System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
 		} else{
 			// reinitialise the entire state
 			this.init();
-			System.out.println("Initialise: " + this.clusterer.getCLICreationString(Clusterer.class));
+			// System.out.println("Initialise: " + this.clusterer.getCLICreationString(Clusterer.class));
 		}
 	}
 

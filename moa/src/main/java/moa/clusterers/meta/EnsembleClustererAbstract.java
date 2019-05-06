@@ -151,11 +151,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.silhouette = new SilhouetteCoefficient();
 		// train the random forest regressor based on the configuration performance
 		// and find the best performing algorithm
-		System.out.println(" ");
-		System.out.println("---- Evaluate performance of current ensemble:");
+		// System.out.println(" ");
+		// System.out.println("---- Evaluate performance of current ensemble:");
 		evaluatePerformance();
 
 		System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
+		System.out.println(" ");
 
 		// generate a new configuration and predict its performance using the random
 		// forest regressor
@@ -167,7 +168,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	protected void evaluatePerformance() {
 
-		double maxVal = -1 * Double.MAX_VALUE;
+		double maxVal = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i < this.ensemble.size(); i++) {
 			// get micro clusters of this clusterer
 			Clustering result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
@@ -217,13 +218,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
-			System.out.println(" ");
-			System.out.println("---- Sample new configuration " + z + ":");
+			// System.out.println(" ");
+			// System.out.println("---- Sample new configuration " + z + ":");
 
 			// copy existing clusterer configuration
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(silhs);
-			System.out.println("Selected Configuration " + parentIdx + " as parent: "
-					+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
+			// System.out.println("Selected Configuration " + parentIdx + " as parent: "
+			// 		+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel);
 
 			// sample new configuration from the parent
@@ -235,10 +236,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			newDataset.setClassIndex(newDataset.numAttributes());
 			newInst.setDataset(newDataset);
 
-			System.out.println(" ");
-			System.out.println("---- Predict performance of new configuration:");
 			double prediction = this.ARFregs.get(newAlgorithm.algorithm).getVotesForInstance(newInst)[0];
-			System.out.println("Predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class)
+			System.out.println("Based on " + parentIdx + " predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class)
 					+ "\t => \t Silhouette: " + prediction);
 
 			// random forest only works with at least two training samples
@@ -248,7 +247,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// if we still have open slots in the ensemble (not full)
 			if (this.ensemble.size() < this.settings.ensembleSize) {
-				System.out.println("Ensemble not full. Add configuration as new algorithm.");
+				System.out.println("Add configuration as new algorithm.");
 
 				// add to ensemble
 				this.ensemble.add(newAlgorithm);
@@ -256,26 +255,64 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				// update current silhouettes with the prediction
 				silhs.add(prediction);
 
-			} else if (prediction > this.silhouette.getMinValue(0)) {
+			} else if (prediction > EnsembleClustererAbstract.getWorstSolution(silhs)) {
 				// if the predicted performance is better than the one we have in the ensemble
 
-				// proportionally sample a configuration that will be replaced, do not sample
-				// the incumbent
+				// proportionally sample a configuration that will be replaced
 				int replaceIdx = EnsembleClustererAbstract.sampleInvertProportionally(silhs);
+
+				// get the worst result and replace it
+				// int replaceIdx = EnsembleClustererAbstract.getWorstSolutionIdx(silhs);
 
 				// update current silhouettes with the prediction
 				silhs.set(replaceIdx, prediction);
 
-				System.out.println(
-						"Ensemble already full but new configuration is promising! Replace algorithm: " + replaceIdx);
+				System.out.println("Replace algorithm: " + replaceIdx);
 
 				// replace in ensemble
 				this.ensemble.set(replaceIdx, newAlgorithm);
 			} else {
-				System.out.println("Ensemble full and new configuration is not promising! Discard Solution.");
+				// System.out.println("Discard configuration.");
 			}
 		}
 
+	}
+
+	static double getWorstSolution(ArrayList<Double> values){
+
+		double min = Double.POSITIVE_INFINITY;
+		for (int i=0; i< values.size();i++) {
+		   if (values.get(i) < min){
+			   min = values.get(i);
+		   }
+		}
+		return (min);
+	}
+
+	static int getWorstSolutionIdx(ArrayList<Double> values){
+
+		double min = Double.POSITIVE_INFINITY;
+		int minIdx = -1;
+		for (int i=0; i< values.size();i++) {
+		   if (values.get(i) < min){
+			   min = values.get(i);
+			   minIdx = i;
+		   }
+		}
+		return (minIdx);
+	}
+
+	static int getBestSolutionIdx(ArrayList<Double> values){
+
+		double max = Double.NEGATIVE_INFINITY;
+		int maxIdx = -1;
+		for (int i=0; i< values.size();i++) {
+		   if (values.get(i) > max){
+				max = values.get(i);
+			   maxIdx = i;
+		   }
+		}
+		return (maxIdx);
 	}
 
 	static int sampleInvertProportionally(ArrayList<Double> values) {
@@ -293,7 +330,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	// sample an index from a list of values, proportionally to the respective value
 	static int sampleProportionally(ArrayList<Double> values) {
 
-		double minVal = Double.MAX_VALUE;
+		double minVal = Double.POSITIVE_INFINITY;
 		for (Double value : values) {
 			if(value < minVal){
 				minVal = value;
@@ -388,7 +425,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		pw.println("");
 
 		ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
-		for (int j = 0; j < 100000; j++) {
+		for (int j = 0; j < 200000; j++) {
 			Instance inst = stream.nextInstance().getData();
 			if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no
 															// class exists
@@ -438,7 +475,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			pw.println("points\tsilhouette");
 
 			windowPoints = new ArrayList<DataPoint>(windowSize);
-			for (int j = 0; j < 100000; j++) {
+			for (int j = 0; j < 200000; j++) {
 				Instance inst = stream.nextInstance().getData();
 				if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no
 																// class exists

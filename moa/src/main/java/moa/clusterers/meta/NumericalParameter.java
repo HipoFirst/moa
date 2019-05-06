@@ -25,7 +25,7 @@ public class NumericalParameter implements IParameter {
 		for (int i = 0; i < x.range.length; i++) {
 			range[i] = (double) x.range[i];
 		}
-		this.std = (this.range[1] - this.range[0]) / 2;
+		this.std = (this.range[1] - this.range[0]) / 8;
 		this.attribute = new Attribute(x.parameter);
 	}
 
@@ -55,9 +55,9 @@ public class NumericalParameter implements IParameter {
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
 		double newValue = trncnormal.sample();
 
-		System.out.println("Sample new configuration for numerical parameter -" + this.parameter + " with mean: "
-				+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
-				+ this.parameter + " " + newValue);
+		// System.out.println("Sample new configuration for numerical parameter -" + this.parameter + " with mean: "
+		// 		+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
+		// 		+ this.parameter + " " + newValue);
 
 		this.value = newValue;
 
