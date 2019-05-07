@@ -39,7 +39,7 @@ public class EnsembleClusterer extends EnsembleClustererAbstract {
 			// and concatenate them to a single cluster
 			for (int j = 0; j < clusters.size(); j++) {
 				SphereCluster clstr = (SphereCluster) clusters.get(j); // TODO are there only SphereCluster?
-				clstr.setWeight(clstr.getWeight() * silhs.get(j));
+				clstr.setWeight(clstr.getWeight() * silhs.get(i));
 				ensembleClustering.add(clstr);
 			}
 		}

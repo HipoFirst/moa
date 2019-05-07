@@ -1,7 +1,7 @@
 {
 	"windowSize": 1000,
 	"ensembleSize": 10,
-	"newConfigurations": 1,
+	"newConfigurations": 10,
 	"keepCurrentModel": "false",
 	"algorithms": [
 		{

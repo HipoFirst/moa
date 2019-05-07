@@ -59,6 +59,7 @@ public class IntegerParameter implements IParameter {
 		// 		+ this.parameter + " " + newValue);
 
 		this.value = newValue;
+
 		// adapt distribution
 		// this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
 	}
