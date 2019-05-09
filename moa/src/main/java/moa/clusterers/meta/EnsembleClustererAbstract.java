@@ -77,6 +77,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
+	boolean verbose=false;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -98,7 +99,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	@Override
 	public Clustering getClusteringResult() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -124,8 +124,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	@Override
 	public void trainOnInstanceImpl(Instance inst) {
 
-		if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no class
-														// exists
+		// it appears to use numAttributes as the index when no class exists
+		if (inst.classIndex() < inst.numAttributes()) {
 			inst.deleteAttributeAt(inst.classIndex()); // remove class label
 		}
 
@@ -141,8 +141,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// every windowSize we update the configurations
 		if (this.instancesSeen % this.settings.windowSize == 0) {
 			// System.out.println(" ");
-			// System.out.println(" ");
-			// System.out.println("-------------- Processed " + instancesSeen + " Instances --------------");
+			if(this.verbose) System.out.println(" ");
+			if(this.verbose) System.out.println("-------------- Processed " + instancesSeen + " Instances --------------");
 
 			updateConfiguration(); // update configuration
 		}
@@ -158,7 +158,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// System.out.println("---- Evaluate performance of current ensemble:");
 		evaluatePerformance();
 
-		// System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
+		if(this.verbose) System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
 		// System.out.println(" ");
 
 		// generate a new configuration and predict its performance using the random
@@ -180,21 +180,21 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				throw new RuntimeException("Micro clusters not available for "
 						+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
 			} else if (result.size() == 0 || result.size() == 1) {
-				performance = -1; // discourage solutions with no or a single cluster
+				performance = -1.0; // discourage solutions with no or a single cluster
 				this.silhouette.addValue(0, performance);
 			} else {
 				// evaluate clustering using silhouette width
 				this.silhouette.evaluateClustering(result, null, windowPoints);
 				performance = this.silhouette.getLastValue(0);
 				// if ownDistance == otherDistance == 0 the Silhouette will return NaN
-				// TODO this is terribly inefficient just to remove an NaN value from the silhouette container
+				// TODO this is terribly inefficient just to replace an NaN value
 				if (Double.isNaN(performance)) {
 					ArrayList<Double> silhs = this.silhouette.getAllValues(0);
 					this.silhouette = new SilhouetteCoefficient();
-					for(double sil: silhs){
-						if(!Double.isNaN(sil)){
+					for (double sil : silhs) {
+						if (!Double.isNaN(sil)) {
 							this.silhouette.addValue(0, sil);
-						} else{
+						} else {
 							this.silhouette.addValue(0, -1.0);
 						}
 					}
@@ -202,8 +202,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				}
 			}
 
-			// System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
-			// 		+ "\t => \t Silhouette: " + performance);
+			if(this.verbose) System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)	+ "\t => \t Silhouette: " + performance);
 
 			// find best clustering result among all algorithms
 			if (performance > maxVal) {
@@ -248,16 +247,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// sample new configuration from the parent
 			newAlgorithm.sampleNewConfig(this.iter, this.settings.newConfigurations, this.settings.keepCurrentModel);
 
+			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
 			Instance newInst = new DenseInstance(1.0, params);
 			Instances newDataset = new Instances(null, newAlgorithm.attributes, 0);
 			newDataset.setClassIndex(newDataset.numAttributes());
 			newInst.setDataset(newDataset);
 
+			// predict the performance of the new configuration using the trained adaptive random forest
 			double prediction = this.ARFregs.get(newAlgorithm.algorithm).getVotesForInstance(newInst)[0];
-			// System.out.println("Based on " + parentIdx + " predict: "
-			// 		+ newAlgorithm.clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: "
-			// 		+ prediction);
+			if(this.verbose) System.out.println("Based on " + parentIdx + " predict: " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: " + prediction);
 
 			// random forest only works with at least two training samples
 			if (Double.isNaN(prediction)) {
@@ -266,37 +265,40 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// if we still have open slots in the ensemble (not full)
 			if (this.ensemble.size() < this.settings.ensembleSize) {
-				// System.out.println("Add configuration as new algorithm.");
+				if(this.verbose) System.out.println("Add configuration as new algorithm.");
 
 				// add to ensemble
 				this.ensemble.add(newAlgorithm);
 
 				// update current silhouettes with the prediction
-				silhs.add(prediction);
+				// silhs.add(prediction);
 
-			} else if (prediction > EnsembleClustererAbstract.getWorstSolution(silhs)) {
+			} else if (prediction > EnsembleClustererAbstract.getWorstSolution(silhs)) { // || EnsembleClustererAbstract.getWorstSolution(silhs) == -1.0)
 				// if the predicted performance is better than the one we have in the ensemble
 
 				// proportionally sample a configuration that will be replaced
 				int replaceIdx = EnsembleClustererAbstract.sampleInvertProportionally(silhs);
 
-				// get the worst result and replace it
+				// alternatively: get the worst result and replace it
 				// int replaceIdx = EnsembleClustererAbstract.getWorstSolutionIdx(silhs);
 
 				// update current silhouettes with the prediction
-				silhs.set(replaceIdx, prediction);
+				// silhs.set(replaceIdx, prediction);
 
-				// System.out.println("Replace algorithm: " + replaceIdx);
+				if(this.verbose) System.out.println("Replace algorithm: " + replaceIdx);
 
 				// replace in ensemble
 				this.ensemble.set(replaceIdx, newAlgorithm);
-			} else {
+			} //else {
+				// Otherwise we discard the solution
 				// System.out.println("Discard configuration.");
-			}
+			//}
 		}
 
 	}
 
+
+	// get lowest value in arraylist
 	static double getWorstSolution(ArrayList<Double> values) {
 
 		double min = Double.POSITIVE_INFINITY;
@@ -308,6 +310,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		return (min);
 	}
 
+	// get index of lowest value in arraylist
 	static int getWorstSolutionIdx(ArrayList<Double> values) {
 
 		double min = Double.POSITIVE_INFINITY;
@@ -321,25 +324,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		return (minIdx);
 	}
 
-	static int getBestSolutionIdx(ArrayList<Double> values) {
 
-		double max = Double.NEGATIVE_INFINITY;
-		int maxIdx = -1;
-		for (int i = 0; i < values.size(); i++) {
-			if (values.get(i) > max) {
-				max = values.get(i);
-				maxIdx = i;
-			}
-		}
-		return (maxIdx);
-	}
-
+	// sample an index from a list of values, inverse proportionally to the
+	// respective value
 	static int sampleInvertProportionally(ArrayList<Double> values) {
 
 		ArrayList<Double> vals = new ArrayList<Double>(values.size());
 
 		for (int i = 0; i < values.size(); i++) {
 			vals.add(-1 * values.get(i));
+			// System.out.println(vals.get(i));
 		}
 
 		return (EnsembleClustererAbstract.sampleProportionally(vals));
@@ -349,6 +343,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	// sample an index from a list of values, proportionally to the respective value
 	static int sampleProportionally(ArrayList<Double> values) {
 
+		// get min
 		double minVal = Double.POSITIVE_INFINITY;
 		for (Double value : values) {
 			if (value < minVal) {
@@ -357,11 +352,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		}
 		minVal = Math.abs(minVal);
 
+		// sum weights (shifted by abs(min) to have positive range)
 		double completeWeight = 0.0;
 		for (Double value : values) {
-			completeWeight += value + minVal; // +min to have positive range
+			completeWeight += value + minVal;
 		}
 
+		// sample random number within range of total weight
 		double r = Math.random() * completeWeight;
 		double countWeight = 0.0;
 		for (int j = 0; j < values.size(); j++) {
@@ -398,24 +395,21 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			this.iter = 0;
 			this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
 
-			// also create the ensemble which can be larger than the provided (starting)
-			// configurations
+			// create the ensemble
 			this.ensemble = new ArrayList<Algorithm>(this.settings.ensembleSize);
 			// copy and initialise the provided starting configurations in the ensemble
 			for (int i = 0; i < this.settings.algorithms.length; i++) {
 				this.ensemble.add(new Algorithm(this.settings.algorithms[i]));
 			}
 
-			// create or reset one regressor per algorithm
+			// create one regressor per algorithm
 			for (int i = 0; i < this.settings.algorithms.length; i++) {
 				AdaptiveRandomForestRegressor ARFreg = new AdaptiveRandomForestRegressor();
 				ARFreg.prepareForUse();
 				this.ARFregs.put(this.settings.algorithms[i].algorithm, ARFreg);
 			}
 
-		} catch (
-
-		FileNotFoundException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
 		super.prepareForUseImpl(monitor, repository);
@@ -433,32 +427,32 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(new SimpleCSVStream());
 		((SimpleCSVStream) streams.get(streams.size() - 1)).csvFileOption = new FileOption("", 'z', "", "covertype.csv", "", false);
 
-		int[] lengths = {1000000, 29927, 2219802, 581011};
-		String[] names = {"RBF", "powersupply", "sensor", "covertype"};
+		int[] lengths = { 2000000, 29928, 2219803, 581012 };
+		String[] names = { "RBF", "powersupply", "sensor", "covertype" };
 		
 		int windowSize = 1000;
-	
+
 		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
 		algorithms.add(new EnsembleClustererBlast());
-		// algorithms.add(new EnsembleClusterer());
+		// algorithms.add(new EnsembleClustererMerge());
 		algorithms.add(new WithDBSCAN());
-		algorithms.add(new WithKmeans());
+		// algorithms.add(new WithKmeans());
 
-
-
-		for(int s=0; s < streams.size(); s++){
+		for (int s = 0; s < streams.size(); s++) {
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();
+			streams.get(s).restart();
 
 			for (int a = 0; a < algorithms.size(); a++) {
 				System.out.println("Algorithm: " + ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class));
 
 				algorithms.get(a).prepareForUse();
+				algorithms.get(a).resetLearningImpl();
 				streams.get(s).restart();
 				File f = new File(names[s] + "_"
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class) + ".txt");
 				PrintWriter pw = new PrintWriter(f);
-	
+
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 					pw.print("points\tsilhouette");
 					EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
@@ -466,31 +460,37 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					for (int j = 0; j < algorithm.parameters.length; j++) {
 						pw.print("\t" + algorithm.parameters[j].getParameter());
 					}
-				} else{
+				} else {
 					pw.print("points\tsilhouette");
 				}
 				pw.print("\n");
-	
+
 				ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
-				for (int d = 0; d < lengths[s]; d++) {
+				for (int d = 1; d < lengths[s]; d++) {
 					Instance inst = streams.get(s).nextInstance().getData();
-					if (inst.classIndex() < inst.numAttributes()) { // it appears to use numAttributes as the index when no
-																	// class exists
+					// apparently numAttributes is the class index when no class exists
+					if (inst.classIndex() < inst.numAttributes()) {
 						inst.deleteAttributeAt(inst.classIndex()); // remove class label
 					}
 					DataPoint point = new DataPoint(inst, d);
 					windowPoints.add(point);
 					algorithms.get(a).trainOnInstanceImpl(inst);
-					if ((d + 1) % windowSize == 0) {
-							
+					if (d % windowSize == 0) {
+
 						SilhouetteCoefficient silh = new SilhouetteCoefficient();
 						Clustering result = algorithms.get(a).getMicroClusteringResult();
 						silh.evaluateClustering(result, null, windowPoints);
-	
+
+						// System.out.println(silh.getLastValue(0));
 						pw.print(d);
 						pw.print("\t");
-						pw.print(silh.getLastValue(0));
-	
+
+						if (result.size() == 0 || result.size() == 1) {
+							pw.print(-1);
+						} else{
+							pw.print(silh.getLastValue(0));
+						}
+
 						if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 							EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
 							Algorithm algorithm = alg.ensemble.get(alg.bestModel);
@@ -499,12 +499,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							}
 						}
 						pw.print("\n");
-	
+
 						windowPoints.clear();
 						pw.flush();
 					}
 
-					if(d % 100000 == 0){
+					if (d % 10000 == 0) {
 						System.out.println("Observation: " + d);
 					}
 				}
@@ -513,7 +513,3 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		}
 	}
 }
-// System.out.println(ClassOption.stripPackagePrefix(this.ensemble[i].getClass().getName(),
-// Clusterer.class)); // print class
-// System.out.println(this.ensemble[i].getOptions().getAsCLIString()); // print
-// non-default options

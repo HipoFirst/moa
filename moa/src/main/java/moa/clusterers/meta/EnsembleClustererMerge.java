@@ -10,7 +10,7 @@ import moa.cluster.SphereCluster;
 import moa.core.AutoExpandVector;
 import moa.streams.clustering.RandomRBFGeneratorEvents;
 
-public class EnsembleClusterer extends EnsembleClustererAbstract {
+public class EnsembleClustererMerge extends EnsembleClustererAbstract {
 
 	private static final long serialVersionUID = 1L;
 
@@ -49,7 +49,7 @@ public class EnsembleClusterer extends EnsembleClustererAbstract {
 
 	public static void main(String[] args) {
 
-		EnsembleClusterer algorithm = new EnsembleClusterer();
+		EnsembleClustererMerge algorithm = new EnsembleClustererMerge();
 		RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
 		stream.prepareForUse();
 		algorithm.prepareForUse();

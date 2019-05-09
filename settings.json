@@ -7,19 +7,22 @@
 		{
 			"algorithm": "denstream.WithDBSCAN",
 			"parameters": [
-				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]}, 
-				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]}, 
-				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]}, 
-				{"parameter": "i", "type":"integer", "value":1000, "range":[1,10000]}
+				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]}//,
+				// {"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
+				// {"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
+				// {"parameter": "i", "type":"integer", "value":1000, "range":[1,10000]},
+				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]},
+				// {"parameter": "n", "type":"categorical", "value":"female", "range":["female","male"]},
+				// {"parameter": "b", "type":"boolean", "value":"true"}
 			]
 		}
-		,
-		{
-			"algorithm": "clustream.WithKmeans",
-			"parameters": [
-				{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
-				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
-			]
-		}
+		// ,
+		// {
+		// 	"algorithm": "clustream.WithKmeans",
+		// 	"parameters": [
+		// 		{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
+		// 		{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
+		// 	]
+		// }
 	]
 }
