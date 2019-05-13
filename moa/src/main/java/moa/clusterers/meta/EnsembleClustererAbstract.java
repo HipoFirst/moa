@@ -350,19 +350,20 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				minVal = value;
 			}
 		}
-		minVal = Math.abs(minVal);
 
-		// sum weights (shifted by abs(min) to have positive range)
+		// sum weights (shifted by min to have positive range starting at 0)
+		// this also excludes the worst values from the sampling 
+		// (in our setup this usually exludesthe incumbant from removal and -1.0 from parent selection)
 		double completeWeight = 0.0;
 		for (Double value : values) {
-			completeWeight += value + minVal;
+			completeWeight += value - minVal;
 		}
 
 		// sample random number within range of total weight
 		double r = Math.random() * completeWeight;
 		double countWeight = 0.0;
 		for (int j = 0; j < values.size(); j++) {
-			countWeight += values.get(j) + minVal;
+			countWeight += values.get(j) - minVal;
 			if (countWeight >= r) {
 				return j;
 			}
@@ -419,23 +420,45 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	public static void main(String[] args) throws FileNotFoundException {
 
 		ArrayList<ClusteringStream> streams = new ArrayList<ClusteringStream>();
-		streams.add(new RandomRBFGeneratorEvents());
-		streams.add(new SimpleCSVStream());
-		((SimpleCSVStream) streams.get(streams.size() - 1)).csvFileOption = new FileOption("", 'z', "", "powersupply.csv", "", false);
-		streams.add(new SimpleCSVStream());
-		((SimpleCSVStream) streams.get(streams.size() - 1)).csvFileOption = new FileOption("", 'z', "", "sensor.csv", "", false);
-		streams.add(new SimpleCSVStream());
-		((SimpleCSVStream) streams.get(streams.size() - 1)).csvFileOption = new FileOption("", 'z', "", "covertype.csv", "", false);
-
-		int[] lengths = { 2000000, 29928, 2219803, 581012 };
-		String[] names = { "RBF", "powersupply", "sensor", "covertype" };
+		SimpleCSVStream stream;
 		
+		streams.add(new RandomRBFGeneratorEvents());
+
+		stream = new SimpleCSVStream();
+		stream.csvFileOption = new FileOption("", 'z', "",
+		"C:/Users/m_carn01/Desktop/Uni-Muenster/sciebo/[stream] configuration/data/sensor_relevant_standardized.csv", "",
+		false);
+		streams.add(stream);
+
+		stream = new SimpleCSVStream();
+		stream.csvFileOption = new FileOption("", 'z', "",
+		"C:/Users/m_carn01/Desktop/Uni-Muenster/sciebo/[stream] configuration/data/powersupply_relevant_standardized.csv", "",
+		false);
+		streams.add(stream);
+
+		stream = new SimpleCSVStream();
+		stream.csvFileOption = new FileOption("", 'z', "",
+		"C:/Users/m_carn01/Desktop/Uni-Muenster/sciebo/[stream] configuration/data/covertype_relevant_standardized.csv", "",
+		false);
+		streams.add(stream);
+
+		// int[] lengths = { 2000000, 2219803, 29928, 581012 };
+		// String[] names = { "RBF", "sensor", "powersupply", "covertype" };
+		
+		int[] lengths = { 100000, 100000, 29928, 100000 };
+		String[] names = { "RBF", "sensor", "powersupply", "covertype" };
+
 		int windowSize = 1000;
 
 		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
 		algorithms.add(new EnsembleClustererBlast());
+
 		// algorithms.add(new EnsembleClustererMerge());
-		algorithms.add(new WithDBSCAN());
+
+		WithDBSCAN algorithm = new WithDBSCAN();
+		// algorithm.epsilonOption.setValue(.1);
+		algorithms.add(algorithm);
+
 		// algorithms.add(new WithKmeans());
 
 		for (int s = 0; s < streams.size(); s++) {
@@ -449,16 +472,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				algorithms.get(a).prepareForUse();
 				algorithms.get(a).resetLearningImpl();
 				streams.get(s).restart();
-				File f = new File(names[s] + "_"
-						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class) + ".txt");
+
+				File f = new File("C:/Users/m_carn01/Desktop/Uni-Muenster/Promotion/Paper/configuration/data/"
+						+ names[s] + "_"
+						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
+						+ ".txt");
 				PrintWriter pw = new PrintWriter(f);
 
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 					pw.print("points\tsilhouette");
 					EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
-					Algorithm algorithm = alg.ensemble.get(alg.bestModel);
-					for (int j = 0; j < algorithm.parameters.length; j++) {
-						pw.print("\t" + algorithm.parameters[j].getParameter());
+					Algorithm alg2 = alg.ensemble.get(alg.bestModel);
+					for (int j = 0; j < alg2.parameters.length; j++) {
+						pw.print("\t" + alg2.parameters[j].getParameter());
 					}
 				} else {
 					pw.print("points\tsilhouette");
@@ -486,16 +512,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						pw.print("\t");
 
 						if (result.size() == 0 || result.size() == 1) {
-							pw.print(-1);
+							pw.print(-1.0); // -1.0"nan"
 						} else{
 							pw.print(silh.getLastValue(0));
 						}
 
 						if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 							EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
-							Algorithm algorithm = alg.ensemble.get(alg.bestModel);
-							for (int p = 0; p < algorithm.parameters.length; p++) {
-								pw.print("\t" + algorithm.parameters[p].getValue());
+							Algorithm alg2 = alg.ensemble.get(alg.bestModel);
+							for (int p = 0; p < alg2.parameters.length; p++) {
+								pw.print("\t" + alg2.parameters[p].getValue());
 							}
 						}
 						pw.print("\n");

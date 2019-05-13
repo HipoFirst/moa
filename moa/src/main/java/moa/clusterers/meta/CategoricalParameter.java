@@ -78,7 +78,8 @@ public class CategoricalParameter implements IParameter {
 
 		// adapt distribution
 		// TODO not directly transferable: (1-((iter -1) / maxIter))
-		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
+		// this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
+		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * Math.pow(2,0.01));
 
 		// divide by sum
 		double sum = 0.0;

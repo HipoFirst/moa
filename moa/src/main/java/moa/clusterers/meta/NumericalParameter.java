@@ -63,5 +63,6 @@ public class NumericalParameter implements IParameter {
 
 		// adapt distribution
 		// this.std = this.std * 0.9;//(Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
+		this.std = this.std * Math.pow(2,-1*0.01);
 	}
 }

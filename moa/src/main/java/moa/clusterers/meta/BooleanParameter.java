@@ -83,7 +83,8 @@ public class BooleanParameter implements IParameter {
 		this.value = newValue;
 
 		// adapt distribution
-		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
+		// this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
+		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * Math.pow(2,0.01));
 
 
 		// divide by sum
