@@ -108,7 +108,7 @@ public class HeterogeneousEnsembleBlastFadingFactors
 		}
 
 		instancesSeen += 1;
-		if (instancesSeen % gracePeriodOption.getValue() == 0) {
+		if (instancesSeen % gracePerionOption.getValue() == 0) {
 			topK = topK(historyTotal, activeClassifiersOption.getValue());
 		}
 	}

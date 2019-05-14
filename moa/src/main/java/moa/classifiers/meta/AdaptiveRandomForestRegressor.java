@@ -139,7 +139,7 @@ public class AdaptiveRandomForestRegressor extends AbstractClassifier implements
             predictions.addToValue(i, currentPrediction);
             ++accounted;
         }
-//        double predicted = predictions.sumOfValues() / accounted;
+        double predicted = predictions.sumOfValues() / accounted;
 //        if(predicted >= 1500) {
 //            System.out.println(this.instancesSeen + " = " + predictions);
 //            System.out.println(this.instancesSeen + " = " + ages);

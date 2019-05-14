@@ -19,6 +19,9 @@
  */
 package moa.streams;
 
+import moa.capabilities.CapabilitiesHandler;
+import moa.capabilities.Capability;
+import moa.capabilities.ImmutableCapabilities;
 import moa.core.Example;
 import com.yahoo.labs.samoa.instances.Instance;
 
@@ -29,8 +32,5 @@ import com.yahoo.labs.samoa.instances.Instance;
  * @version $Revision: 7 $ 
  */
 public interface InstanceStream extends ExampleStream<Example<Instance>> {
-
-
-
 
 }

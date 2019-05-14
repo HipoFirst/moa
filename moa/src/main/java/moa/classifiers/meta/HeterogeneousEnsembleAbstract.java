@@ -84,8 +84,8 @@ public abstract class HeterogeneousEnsembleAbstract extends AbstractClassifier i
 							"trees.HoeffdingTree") },
 			',');
 
-	public IntOption gracePeriodOption = new IntOption("gracePeriod", 'g',
-			"How many instances before we reevaluate the best classifier", 1, 1,
+	public IntOption gracePerionOption = new IntOption("gracePeriod", 'g',
+			"How many instances before we reevalate the best classifier", 1, 1,
 			Integer.MAX_VALUE);
 
 	public IntOption activeClassifiersOption = new IntOption("activeClassifiers",
