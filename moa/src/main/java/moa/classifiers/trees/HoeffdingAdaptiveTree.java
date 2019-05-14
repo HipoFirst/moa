@@ -15,7 +15,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program. If not, see <http://www.gnu.org/licenses/>.
- *    
+ *
  */
 package moa.classifiers.trees;
 
@@ -60,7 +60,7 @@ public class HoeffdingAdaptiveTree extends HoeffdingTree {
     public String getPurposeString() {
         return "Hoeffding Adaptive Tree for evolving data streams that uses ADWIN to replace branches for new ones.";
     }
-    
+
  /*   public MultiChoiceOption leafpredictionOption = new MultiChoiceOption(
             "leafprediction", 'l', "Leaf prediction to use.", new String[]{
                 "MC", "NB", "NBAdaptive"}, new String[]{
@@ -122,13 +122,13 @@ public class HoeffdingAdaptiveTree extends HoeffdingTree {
             }
             return byteSize;
         }
-        
+
         public AdaSplitNode(InstanceConditionalTest splitTest,
                 double[] classObservations, int size) {
             super(splitTest, classObservations, size);
             this.classifierRandom = new Random(this.randomSeed);
         }
-        
+
         public AdaSplitNode(InstanceConditionalTest splitTest,
                 double[] classObservations) {
             super(splitTest, classObservations);
@@ -453,7 +453,7 @@ public class HoeffdingAdaptiveTree extends HoeffdingTree {
             double[] classObservations, int size) {
         return new AdaSplitNode(splitTest, classObservations, size);
     }
-   
+
     @Override
     protected SplitNode newSplitNode(InstanceConditionalTest splitTest,
             double[] classObservations) {
