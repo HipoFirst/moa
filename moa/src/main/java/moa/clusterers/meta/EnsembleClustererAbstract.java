@@ -284,7 +284,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 				// update current silhouettes with the prediction
 				// silhs.set(replaceIdx, prediction);
-
 				if(this.verbose) System.out.println("Replace algorithm: " + replaceIdx);
 
 				// replace in ensemble
@@ -426,19 +425,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		stream = new SimpleCSVStream();
 		stream.csvFileOption = new FileOption("", 'z', "",
-		"C:/Users/m_carn01/Desktop/Uni-Muenster/sciebo/[stream] configuration/data/sensor_relevant_standardized.csv", "",
+		"sensor.csv", "",
 		false);
 		streams.add(stream);
 
 		stream = new SimpleCSVStream();
 		stream.csvFileOption = new FileOption("", 'z', "",
-		"C:/Users/m_carn01/Desktop/Uni-Muenster/sciebo/[stream] configuration/data/powersupply_relevant_standardized.csv", "",
+		"powersupply.csv", "",
 		false);
 		streams.add(stream);
 
 		stream = new SimpleCSVStream();
 		stream.csvFileOption = new FileOption("", 'z', "",
-		"C:/Users/m_carn01/Desktop/Uni-Muenster/sciebo/[stream] configuration/data/covertype_relevant_standardized.csv", "",
+		"covertype.csv", "",
 		false);
 		streams.add(stream);
 
@@ -473,8 +472,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				algorithms.get(a).resetLearningImpl();
 				streams.get(s).restart();
 
-				File f = new File("C:/Users/m_carn01/Desktop/Uni-Muenster/Promotion/Paper/configuration/data/"
-						+ names[s] + "_"
+				File f = new File(names[s] + "_"
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
 						+ ".txt");
 				PrintWriter pw = new PrintWriter(f);
@@ -512,7 +510,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						pw.print("\t");
 
 						if (result.size() == 0 || result.size() == 1) {
-							pw.print(-1.0); // -1.0"nan"
+							pw.print(-1.0); // "nan"
 						} else{
 							pw.print(silh.getLastValue(0));
 						}

@@ -32,7 +32,7 @@ public class OrdinalParameter implements IParameter {
 				this.numericValue = i; // get index of init value
 			}
 		}
-		this.std = (this.range.length - 0) / 8;
+		this.std = (this.range.length - 0) / 2;
 		this.attribute = new Attribute(x.parameter);
 
 	}

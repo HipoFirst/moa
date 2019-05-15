@@ -25,7 +25,7 @@ public class IntegerParameter implements IParameter {
 		for (int i = 0; i < x.range.length; i++) {
 			range[i] = (int) (double) x.range[i];
 		}
-		this.std = (this.range[1] - this.range[0]) / 8;
+		this.std = (this.range[1] - this.range[0]) / 2;
 		this.attribute = new Attribute(x.parameter);
 	}
 
