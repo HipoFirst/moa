@@ -1,6 +1,6 @@
 {
 	"windowSize": 1000,
-	"ensembleSize": 10,
+	"ensembleSize": 20,
 	"newConfigurations": 10,
 	"keepCurrentModel": "false",
 	"algorithms": [
@@ -9,13 +9,20 @@
 			"parameters": [
 				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]}//,
 				// {"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
-				// {"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
+				// {"parameter": "m", "type":"integer", "value":1, "range":[0,10000]}//,
 				// {"parameter": "i", "type":"integer", "value":1000, "range":[1,10000]},
 				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]},
 				// {"parameter": "n", "type":"categorical", "value":"female", "range":["female","male"]},
 				// {"parameter": "b", "type":"boolean", "value":"true"}
 			]
 		}
+		// ,
+		// {
+		// 	"algorithm": "clustree.ClusTree",
+		// 	"parameters": [
+		// 		{"parameter": "H", "type":"integer", "value":8, "range":[1,100]}
+		// 	]
+		// }
 		// ,
 		// {
 		// 	"algorithm": "clustream.WithKmeans",

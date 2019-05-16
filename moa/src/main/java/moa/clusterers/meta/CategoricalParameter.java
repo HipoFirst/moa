@@ -2,6 +2,7 @@ package moa.clusterers.meta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import com.yahoo.labs.samoa.instances.Attribute;
 
@@ -65,8 +66,13 @@ public class CategoricalParameter implements IParameter {
 	}
 
 	public void sampleNewConfig(int iter, int nbNewConfigurations, int nbVariable) {
+
+		HashMap<Integer,Double> map = new HashMap<Integer,Double>();
+		for(int i=0; i < this.probabilities.size(); i++){
+				map.put(i, this.probabilities.get(i));
+		}
 		// update configuration
-		this.numericValue = EnsembleClustererAbstract.sampleProportionally(this.probabilities);
+		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map);
 		String newValue = this.range[this.numericValue];
 
 		System.out.print("Sample new configuration for nominal parameter -" + this.parameter + "with probabilities");

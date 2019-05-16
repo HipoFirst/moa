@@ -872,4 +872,11 @@ public class ClusTree extends AbstractClusterer{
         }
     }
 
+    public void adjustParameters() {
+        breadthFirstStrat = breadthFirstStrategyOption.isSet();
+        negLambda = (1.0 / (double) horizonOption.getValue())
+                * (Math.log(weightThreshold) / Math.log(2));
+        maxHeight = maxHeightOption.getValue();
+    }
+
 }

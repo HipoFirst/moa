@@ -6,13 +6,14 @@ import com.github.javacliparser.Option;
 import com.github.javacliparser.Options;
 import com.yahoo.labs.samoa.instances.Attribute;
 
+import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
 import moa.options.ClassOption;
 
 public class Algorithm {
 	public String algorithm;
 	public IParameter[] parameters;
-	public Clusterer clusterer;
+	public AbstractClusterer clusterer;
 	public Attribute[] attributes;
 
 	// copy constructor
@@ -26,7 +27,7 @@ public class Algorithm {
 			this.parameters[i] = x.parameters[i].copy();
 		}
 		if(keepCurrentModel){
-			this.clusterer = x.clusterer.copy();
+			this.clusterer = (AbstractClusterer) x.clusterer.copy();
 		}
 	}
 
@@ -79,7 +80,7 @@ public class Algorithm {
 
 		// create new clusterer from CLI string
 		ClassOption opt = new ClassOption("", ' ', "", Clusterer.class, commandLine.toString());
-		this.clusterer = (Clusterer) opt.materializeObject(null, null);
+		this.clusterer = (AbstractClusterer) opt.materializeObject(null, null);
 		this.clusterer.prepareForUse();
 	}
 
@@ -103,6 +104,8 @@ public class Algorithm {
 				Option opt = opts.getOption(param.getParameter().charAt(0));
 				opt.setValueViaCLIString(param.getCLIValueString());
 			}
+
+			((AbstractClusterer) this.clusterer).adjustParameters();
 			// System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
 		} else{
 			// reinitialise the entire state
