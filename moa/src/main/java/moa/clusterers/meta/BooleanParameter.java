@@ -72,7 +72,7 @@ public class BooleanParameter implements IParameter {
 		return this.range;
 	}
 
-	public void sampleNewConfig(int iter, int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(double lambda) {
 
 		HashMap<Integer,Double> map = new HashMap<Integer,Double>();
 		for(int i=0; i < this.probabilities.size(); i++){
@@ -91,7 +91,7 @@ public class BooleanParameter implements IParameter {
 
 		// adapt distribution
 		// this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
-		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * Math.pow(2,0.01));
+		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * (2 - Math.pow(2,-1*lambda)));
 
 
 		// divide by sum

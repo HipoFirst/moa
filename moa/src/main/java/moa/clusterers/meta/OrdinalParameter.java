@@ -58,7 +58,7 @@ public class OrdinalParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(int iter, int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(double lambda) {
 		// update configuration
 		// treat index of range as integer parameter
 		TruncatedNormal trncnormal = new TruncatedNormal(this.numericValue, this.std, (double) (this.range.length - 1),
@@ -72,7 +72,7 @@ public class OrdinalParameter implements IParameter {
 		this.value = this.range[this.numericValue];
 
 		// adapt distribution
-		this.std = this.std * Math.pow(2,-1*0.01);
+		this.std = this.std * Math.pow(2,-1*lambda);
 	}
 
 }

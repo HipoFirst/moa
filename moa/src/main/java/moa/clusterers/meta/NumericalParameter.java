@@ -49,20 +49,31 @@ public class NumericalParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(int iter, int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(double lambda) {
+
+		// trying to balanced exploitation vs exploration by resetting the std
+		if (Math.random() < 0.1) {
+			this.std = (this.range[1] - this.range[0]) / 2;
+		}
+
 		// update configuration
 		// for numeric features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
 		double newValue = trncnormal.sample();
 
-		// System.out.println("Sample new configuration for numerical parameter -" + this.parameter + " with mean: "
-		// 		+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
-		// 		+ this.parameter + " " + newValue);
+		// System.out.println("Sample new configuration for numerical parameter -" +
+		// this.parameter + " with mean: "
+		// + this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " +
+		// this.range[1] + "\t=>\t -"
+		// + this.parameter + " " + newValue);
 
 		this.value = newValue;
 
 		// adapt distribution
-		// this.std = this.std * 0.9;//(Math.pow((1.0 / nbNewConfigurations), (1.0 / nbVariable)));
-		this.std = this.std * Math.pow(2,-1*0.01);
+		// this.std = this.std * (Math.pow((1.0 / nbNewConfigurations), (1.0 /
+		// nbVariable)));
+
+		this.std = this.std * Math.pow(2, -1 * lambda);
+
 	}
 }

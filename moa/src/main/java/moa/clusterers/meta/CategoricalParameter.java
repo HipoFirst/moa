@@ -65,7 +65,7 @@ public class CategoricalParameter implements IParameter {
 		return this.range;
 	}
 
-	public void sampleNewConfig(int iter, int nbNewConfigurations, int nbVariable) {
+	public void sampleNewConfig(double lambda) {
 
 		HashMap<Integer,Double> map = new HashMap<Integer,Double>();
 		for(int i=0; i < this.probabilities.size(); i++){
@@ -83,11 +83,11 @@ public class CategoricalParameter implements IParameter {
 		this.value = newValue;
 
 		// adapt distribution
-		// TODO not directly transferable: (1-((iter -1) / maxIter))
+		// TODO not directly transferable from irace: (1-((iter -1) / maxIter))
 		// this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
-		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * Math.pow(2,0.01));
+		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * (2 - Math.pow(2,-1*lambda)));
 
-		// divide by sum
+		// divide by sum (TODO is this even necessary with our proportional sampling strategy?)
 		double sum = 0.0;
 		for (int i = 0; i < this.probabilities.size(); i++) {
 			sum += this.probabilities.get(i);

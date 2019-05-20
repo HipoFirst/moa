@@ -23,10 +23,10 @@ public class Algorithm {
 		this.algorithm = x.algorithm;
 		this.attributes = x.attributes; // this is a reference since we dont manipulate the attributes
 		this.parameters = new IParameter[x.parameters.length];
-		for (int i=0; i<x.parameters.length; i++){
+		for (int i = 0; i < x.parameters.length; i++) {
 			this.parameters[i] = x.parameters[i].copy();
 		}
-		if(keepCurrentModel){
+		if (keepCurrentModel) {
 			this.clusterer = (AbstractClusterer) x.clusterer.copy();
 		}
 	}
@@ -38,7 +38,7 @@ public class Algorithm {
 		this.parameters = new IParameter[x.parameters.length];
 
 		this.attributes = new Attribute[x.parameters.length];
-		for (int i=0; i<x.parameters.length; i++) {
+		for (int i = 0; i < x.parameters.length; i++) {
 			ParameterConfiguration paramConfig = x.parameters[i];
 			if (paramConfig.type.equals("numeric")) {
 				NumericalParameter param = new NumericalParameter(paramConfig);
@@ -68,8 +68,8 @@ public class Algorithm {
 		init();
 	}
 
+	// initialise a new algorithm using the Command Line Interface (CLI)
 	public void init() {
-		// initialise a new algorithm using the Command Line Interface (CLI)
 		// construct CLI string from settings, e.g. denstream.WithDBSCAN -e 0.08 -b 0.3
 		StringBuilder commandLine = new StringBuilder();
 		commandLine.append(this.algorithm); // first the algorithm class
@@ -84,36 +84,41 @@ public class Algorithm {
 		this.clusterer.prepareForUse();
 	}
 
-	public void sampleNewConfig(int iter, int nbNewConfigurations, boolean keepCurrentModel) {
+	// sample a new confguration based on the current one
+	public void sampleNewConfig(double lambda, boolean keepCurrentModel) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(iter, nbNewConfigurations, this.parameters.length);
+			param.sampleNewConfig(lambda);
 		}
-		
 
-		if(keepCurrentModel){
-			// keep the old state and just change parameter
-			// TODO this does not transfer over since most (all?) algorithms chache the option values
+		if (keepCurrentModel) {
+			// Option 1: keep the old state and just change parameter
 			StringBuilder commandLine = new StringBuilder();
 			for (IParameter param : this.parameters) {
 				commandLine.append(param.getCLIString());
 			}
 
 			Options opts = this.clusterer.getOptions();
-			for(IParameter param : this.parameters){
+			for (IParameter param : this.parameters) {
 				Option opt = opts.getOption(param.getParameter().charAt(0));
 				opt.setValueViaCLIString(param.getCLIValueString());
 			}
 
+			// these changes do not transfer over directly since all algorithms chache the
+			// option values
+			// therefore we try to adjust the cached values if possible
 			((AbstractClusterer) this.clusterer).adjustParameters();
-			// System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
-		} else{
-			// reinitialise the entire state
+			// System.out.println("Changed: " +
+			// this.clusterer.getCLICreationString(Clusterer.class));
+		} else {
+			// Option 2: reinitialise the entire state
 			this.init();
-			// System.out.println("Initialise: " + this.clusterer.getCLICreationString(Clusterer.class));
+			// System.out.println("Initialise: " +
+			// this.clusterer.getCLICreationString(Clusterer.class));
 		}
 	}
 
+	// returns the parameter values as an array
 	public double[] getParamVector(int padding) {
 		double[] params = new double[this.parameters.length + padding];
 		int pos = 0;
