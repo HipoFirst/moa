@@ -2,7 +2,7 @@ package moa.clusterers.meta;
 
 // interface allows us to maintain a single list of parameters
 public interface IParameter {
-	public void sampleNewConfig(double lambda);
+	public void sampleNewConfig(double lambda, boolean hasChanged);
 
 	public IParameter copy();
 

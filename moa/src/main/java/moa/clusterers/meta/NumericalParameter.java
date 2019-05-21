@@ -49,10 +49,10 @@ public class NumericalParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda) {
+	public void sampleNewConfig(double lambda, boolean hasChanged) {
 
 		// trying to balanced exploitation vs exploration by resetting the std
-		if (Math.random() < 0.001) {
+		if (hasChanged) {
 			this.std = (this.range[1] - this.range[0]) / 2;
 		}
 

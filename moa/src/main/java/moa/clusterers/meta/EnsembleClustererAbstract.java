@@ -86,6 +86,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
 	boolean verbose = false;
+	DriftDetectionMethodClassifier changeDetector = new DriftDetectionMethodClassifier();
+	boolean hasChanged = false;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -117,6 +119,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.bestModel = 0;
 		this.iter = 0;
 		this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
+		this.changeDetector.resetLearningImpl();
+		this.hasChanged = false;
 
 		// reset ARFrefs
 		for (AdaptiveRandomForestRegressor ARFreg : this.ARFregs.values()) {
@@ -140,6 +144,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		DataPoint point = new DataPoint(inst, instancesSeen); // create data points from instance
 		this.windowPoints.add(point); // remember points of the current window
 		this.instancesSeen++;
+
+		// detect whether a change happended in this window
+		this.changeDetector.trainOnInstanceImpl(inst);
+		if(this.changeDetector.isChangeDetected()){
+			hasChanged = true;
+		}
 
 		// train all models with the instance
 		for (int i = 0; i < this.ensemble.size(); i++) {
@@ -178,6 +188,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		predictConfiguration();
 
 		this.windowPoints.clear(); // flush the current window
+		this.hasChanged = false;
 		this.iter++;
 	}
 
@@ -266,7 +277,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel);
 
 			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel);
+			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel, this.hasChanged);
 
 			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
@@ -449,6 +460,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			this.bestModel = 0;
 			this.iter = 0;
 			this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
+			this.changeDetector.prepareForUse();
 
 			// create the ensemble
 			this.ensemble = new ArrayList<Algorithm>(this.settings.ensembleSize);
@@ -571,6 +583,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				pw.print("\n");
 
 
+				File fChange = new File(names[s] + "_"
+				+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
+				+ "changeDetector.txt");
+				PrintWriter pwChange = new PrintWriter(fChange);
+				pw.print("points\thasChanged");
+
+
 				DriftDetectionMethodClassifier changeDetector = new DriftDetectionMethodClassifier();
 				changeDetector.prepareForUse();
 				
@@ -579,9 +598,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					Instance inst = streams.get(s).nextInstance().getData();
 
 					changeDetector.trainOnInstanceImpl(inst);
-					boolean change = changeDetector.isChangeDetected();
-					if(change){
-						System.out.println("Change detected!");
+					boolean hasChanged = changeDetector.isChangeDetected();
+					if(hasChanged){
+						pwChange.print(d + "\t" + 1 + "\n");
 					}
 	
 					// apparently numAttributes is the class index when no class exists
@@ -629,6 +648,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					}
 				}
 				pw.close();
+				pwChange.close();
 			}
 		}
 	}

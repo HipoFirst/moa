@@ -72,7 +72,7 @@ public class BooleanParameter implements IParameter {
 		return this.range;
 	}
 
-	public void sampleNewConfig(double lambda) {
+	public void sampleNewConfig(double lambda, boolean hasChanged) {
 
 		HashMap<Integer,Double> map = new HashMap<Integer,Double>();
 		for(int i=0; i < this.probabilities.size(); i++){
