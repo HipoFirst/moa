@@ -3,7 +3,8 @@
 	"ensembleSize": 20,
 	"newConfigurations": 10,
 	"keepCurrentModel": "false",
-	"lambda": 0.1,
+	"preventAlgorithmDeath": "true",
+	"lambda": 0.05,
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
