@@ -65,7 +65,7 @@ public class CategoricalParameter implements IParameter {
 		return this.range;
 	}
 
-	public void sampleNewConfig(double lambda, boolean hasChanged) {
+	public void sampleNewConfig(double lambda) {
 
 		HashMap<Integer,Double> map = new HashMap<Integer,Double>();
 		for(int i=0; i < this.probabilities.size(); i++){

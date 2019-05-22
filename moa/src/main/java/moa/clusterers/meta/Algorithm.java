@@ -85,10 +85,10 @@ public class Algorithm {
 	}
 
 	// sample a new confguration based on the current one
-	public void sampleNewConfig(double lambda, boolean keepCurrentModel, boolean hasChanged) {
+	public void sampleNewConfig(double lambda, boolean keepCurrentModel) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(lambda, hasChanged);
+			param.sampleNewConfig(lambda);
 		}
 
 		if (keepCurrentModel) {

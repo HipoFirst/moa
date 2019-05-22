@@ -49,7 +49,7 @@ public class IntegerParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda, boolean hasChanged) {
+	public void sampleNewConfig(double lambda) {
 		// update configuration
 		// for integer features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);

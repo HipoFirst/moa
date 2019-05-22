@@ -16,7 +16,6 @@ import com.yahoo.labs.samoa.instances.DenseInstance;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
-import moa.classifiers.drift.DriftDetectionMethodClassifier;
 import moa.classifiers.meta.AdaptiveRandomForestRegressor;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
@@ -86,8 +85,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
 	boolean verbose = false;
-	DriftDetectionMethodClassifier changeDetector = new DriftDetectionMethodClassifier();
-	boolean hasChanged = false;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -119,8 +116,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.bestModel = 0;
 		this.iter = 0;
 		this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
-		this.changeDetector.resetLearningImpl();
-		this.hasChanged = false;
 
 		// reset ARFrefs
 		for (AdaptiveRandomForestRegressor ARFreg : this.ARFregs.values()) {
@@ -145,11 +140,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.windowPoints.add(point); // remember points of the current window
 		this.instancesSeen++;
 
-		// detect whether a change happended in this window
-		this.changeDetector.trainOnInstanceImpl(inst);
-		if(this.changeDetector.isChangeDetected()){
-			hasChanged = true;
-		}
 
 		// train all models with the instance
 		for (int i = 0; i < this.ensemble.size(); i++) {
@@ -188,7 +178,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		predictConfiguration();
 
 		this.windowPoints.clear(); // flush the current window
-		this.hasChanged = false;
 		this.iter++;
 	}
 
@@ -277,7 +266,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel);
 
 			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel, this.hasChanged);
+			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel);
 
 			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
@@ -460,7 +449,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			this.bestModel = 0;
 			this.iter = 0;
 			this.windowPoints = new ArrayList<DataPoint>(this.settings.windowSize);
-			this.changeDetector.prepareForUse();
 
 			// create the ensemble
 			this.ensemble = new ArrayList<Algorithm>(this.settings.ensembleSize);
@@ -486,27 +474,31 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	public static void main(String[] args) throws FileNotFoundException {
 
 		ArrayList<ClusteringStream> streams = new ArrayList<ClusteringStream>();
-		SimpleCSVStream stream;
+		SimpleCSVStream file;
 
-		streams.add(new RandomRBFGeneratorEvents());
+		RandomRBFGeneratorEvents rbf = new RandomRBFGeneratorEvents();
+		rbf.eventFrequencyOption.setValue(30000);
+		rbf.eventDeleteCreateOption.setValue(true);
+		rbf.eventMergeSplitOption.setValue(true);
+		streams.add(rbf);
 
-		stream = new SimpleCSVStream();
-		stream.csvFileOption = new FileOption("", 'z', "",
 		"sensor.csv", "",
+		file = new SimpleCSVStream();
+		file.csvFileOption = new FileOption("", 'z', "",
 		false);
-		streams.add(stream);
+		streams.add(file);
 
-		stream = new SimpleCSVStream();
-		stream.csvFileOption = new FileOption("", 'z', "",
 		"powersupply.csv", "",
+		file = new SimpleCSVStream();
+		file.csvFileOption = new FileOption("", 'z', "",
 		false);
-		streams.add(stream);
+		streams.add(file);
 
-		stream = new SimpleCSVStream();
-		stream.csvFileOption = new FileOption("", 'z', "",
 		"covertype.csv", "",
+		file = new SimpleCSVStream();
+		file.csvFileOption = new FileOption("", 'z', "",
 		false);
-		streams.add(stream);
+		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
 		String[] names = { "RBF", "sensor", "powersupply", "covertype" };
@@ -516,10 +508,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		int[] dimensions = { 2, 4, 2, 10 };
 		int windowSize = 1000;
-
-		// int[] lengths = { 2219803 };
-		// String[] names = { "sensor" };
-		// int[] dimensions = { 4 };
 
 		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
 		EnsembleClustererBlast ensemble = new EnsembleClustererBlast();
@@ -581,27 +569,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					pw.print("points\tsilhouette");
 				}
 				pw.print("\n");
-
-
-				File fChange = new File(names[s] + "_"
-				+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
-				+ "changeDetector.txt");
-				PrintWriter pwChange = new PrintWriter(fChange);
-				pw.print("points\thasChanged");
-
-
-				DriftDetectionMethodClassifier changeDetector = new DriftDetectionMethodClassifier();
-				changeDetector.prepareForUse();
-				
+		
 				ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
 				for (int d = 1; d < lengths[s]; d++) {
 					Instance inst = streams.get(s).nextInstance().getData();
-
-					changeDetector.trainOnInstanceImpl(inst);
-					boolean hasChanged = changeDetector.isChangeDetected();
-					if(hasChanged){
-						pwChange.print(d + "\t" + 1 + "\n");
-					}
 	
 					// apparently numAttributes is the class index when no class exists
 					if (inst.classIndex() < inst.numAttributes()) {
@@ -648,7 +619,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					}
 				}
 				pw.close();
-				pwChange.close();
 			}
 		}
 	}
