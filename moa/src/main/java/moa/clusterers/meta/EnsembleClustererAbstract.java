@@ -510,7 +510,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		int windowSize = 1000;
 
 		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
-		EnsembleClustererBlast ensemble = new EnsembleClustererBlast();
+		ConfStream ensemble = new ConfStream();
 		algorithms.add(ensemble);
 
 		WithDBSCAN denstream = new WithDBSCAN();

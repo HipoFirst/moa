@@ -5,19 +5,18 @@ import com.yahoo.labs.samoa.instances.Instance;
 import moa.cluster.Clustering;
 import moa.streams.clustering.RandomRBFGeneratorEvents;
 
-public class EnsembleClustererBlast extends EnsembleClustererAbstract {
+public class ConfStream extends EnsembleClustererAbstract {
 
 	private static final long serialVersionUID = 1L;
 
 	@Override
 	public Clustering getMicroClusteringResult() {
-		return this.ensemble.get(this.bestModel).clusterer.getMicroClusteringResult(); // TODO we could also return
-																						// micro clusters here
+		return this.ensemble.get(this.bestModel).clusterer.getMicroClusteringResult();
 	}
 
 	public static void main(String[] args) {
 
-		EnsembleClustererBlast algorithm = new EnsembleClustererBlast();
+		ConfStream algorithm = new ConfStream();
 		RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
 		stream.prepareForUse();
 		algorithm.prepareForUse();
