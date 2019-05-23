@@ -482,22 +482,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		rbf.eventMergeSplitOption.setValue(true);
 		streams.add(rbf);
 
-		"sensor.csv", "",
+
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		false);
+		file.csvFileOption = new FileOption("", 'z', "", "sensor.csv", "", false);
 		streams.add(file);
 
-		"powersupply.csv", "",
+
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		false);
+		file.csvFileOption = new FileOption("", 'z', "", "powersupply.csv", "",	false);
 		streams.add(file);
 
-		"covertype.csv", "",
+		
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		false);
+		file.csvFileOption = new FileOption("", 'z', "", "covertype.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
