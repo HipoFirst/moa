@@ -1,8 +1,8 @@
 {
 	"windowSize": 1000,
-	"ensembleSize": 20,
+	"ensembleSize": 25,
 	"newConfigurations": 10,
-	"keepCurrentModel": "false",
+	"keepCurrentModel": "true",
 	"preventAlgorithmDeath": "true",
 	"lambda": 0.05,
 	"algorithms": [

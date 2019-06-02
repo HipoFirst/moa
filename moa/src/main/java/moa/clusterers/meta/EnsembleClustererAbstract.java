@@ -568,6 +568,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				pw.print("\n");
 		
 				ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
+				// ArrayList<Instance> windowInstances = new ArrayList<Instance>(windowSize);
 				for (int d = 1; d < lengths[s]; d++) {
 					Instance inst = streams.get(s).nextInstance().getData();
 	
@@ -577,12 +578,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					}
 					DataPoint point = new DataPoint(inst, d);
 					windowPoints.add(point);
+					// windowInstances.add(inst);
 					algorithms.get(a).trainOnInstanceImpl(inst);
+
+					// if (d % windowSize == 0 && d != windowSize) {
 					if (d % windowSize == 0) {
 
 						SilhouetteCoefficient silh = new SilhouetteCoefficient();
 						Clustering result = algorithms.get(a).getMicroClusteringResult();
 
+						
 						pw.print(d);
 						pw.print("\t");
 
@@ -605,6 +610,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							}
 						}
 						pw.print("\n");
+
+
+						// // then train
+						// for(Instance inst2 : windowInstances){
+						// 	algorithms.get(a).trainOnInstanceImpl(inst2);
+						// }
+
+						// windowInstances.clear();
+
 
 						windowPoints.clear();
 						pw.flush();
