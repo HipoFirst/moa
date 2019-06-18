@@ -475,16 +475,22 @@ public class WithKmeans extends AbstractClusterer {
 	}
 
 	public void adjustParameters() {
-		ClustreamKernel[] temp = this.kernels;
-		this.kernels = new ClustreamKernel[maxNumKernelsOption.getValue()];
+		// ClustreamKernel[] temp = this.kernels;
 
-		// copy kernels
-		if(temp.length > this.kernels.length){
-			throw new UnsupportedOperationException("Some kernel states might be lost");
-		}
-		for(int i=0; i < this.kernels.length; i++){
-			this.kernels[i] = temp[i];
-		}
+		// if(temp.length > this.kernels.length){
+		// 	throw new UnsupportedOperationException("Some kernel states might be lost");
+		// }
+
+		// this.kernels = new ClustreamKernel[maxNumKernelsOption.getValue()];
+
+		// // copy kernels
+		// for(int i=0; i < this.kernels.length; i++){
+		// 	if(i < temp.length){
+		// 	this.kernels[i] = temp[i];
+		// 	} else{
+		// 		this.kernels[i] = new CluStreamKernel();
+		// 	}
+		// }
 		
 		this.timeWindow = timeWindowOption.getValue();
 		this.bufferSize = maxNumKernelsOption.getValue();
