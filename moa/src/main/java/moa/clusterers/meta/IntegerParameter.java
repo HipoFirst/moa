@@ -9,24 +9,33 @@ public class IntegerParameter implements IParameter {
 	private int[] range;
 	private double std;
 	private Attribute attribute;
+	private boolean fixed;
 
 	public IntegerParameter(IntegerParameter x) {
 		this.parameter = x.parameter;
 		this.value = x.value;
-		this.range = x.range.clone();
-		this.std = x.std;
 		this.attribute = x.attribute;// new Attribute(x.parameter);
+		this.fixed = x.fixed;
+
+		if(!this.fixed){
+			this.range = x.range.clone();
+			this.std = x.std;
+		}
 	}
 
 	public IntegerParameter(ParameterConfiguration x) {
 		this.parameter = x.parameter;
 		this.value = (int) (double) x.value; // TODO fix casts
-		this.range = new int[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = (int) (double) x.range[i];
-		}
-		this.std = (this.range[1] - this.range[0]) / 2;
 		this.attribute = new Attribute(x.parameter);
+		this.fixed = x.fixed;
+
+		if(!this.fixed){
+			this.range = new int[x.range.length];
+			for (int i = 0; i < x.range.length; i++) {
+				range[i] = (int) (double) x.range[i];
+			}
+			this.std = (this.range[1] - this.range[0]) / 2;
+		}
 	}
 
 	public IntegerParameter copy() {
@@ -45,11 +54,20 @@ public class IntegerParameter implements IParameter {
 		return this.value;
 	}
 
+	public void setValue(int value){
+		this.value = value;
+	}
+
 	public String getParameter() {
 		return this.parameter;
 	}
 
 	public void sampleNewConfig(double lambda, int verbose) {
+
+		if(this.fixed){
+			return;
+		}
+
 		// update configuration
 		// for integer features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);

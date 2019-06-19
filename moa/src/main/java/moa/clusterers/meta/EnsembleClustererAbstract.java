@@ -51,6 +51,7 @@ class ParameterConfiguration {
 	public Object value;
 	public Object[] range;
 	public String type;
+	public boolean fixed;
 }
 
 // This class contains the settings of an algorithm (such as name) as well as an
@@ -128,7 +129,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		// reset individual clusterers
 		for (int i = 0; i < this.ensemble.size(); i++) {
-			this.ensemble.get(i).clusterer.resetLearning();
+			// this.ensemble.get(i).clusterer.resetLearning();
+			this.ensemble.get(i).init();
 		}
 	}
 
@@ -506,7 +508,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		rbf.eventMergeSplitOption.setValue(true);
 		streams.add(rbf);
 
-
 		file = new SimpleCSVStream();
 		file.csvFileOption = new FileOption("", 'z', "", "sensor.csv", "", false);
 		streams.add(file);
@@ -562,6 +563,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				System.out.println("Algorithm: "
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class));
 
+				algorithms.get(a).prepareForUse();
+
 				// TODO these are super ugly special cases
 				if (algorithms.get(a) instanceof StreamKM) {
 					algorithms.get(a).getOptions().getOption('l').setValueViaCLIString("" + lengths[s]);
@@ -569,14 +572,21 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				if (algorithms.get(a) instanceof BICO) {
 					algorithms.get(a).getOptions().getOption('d').setValueViaCLIString("" + dimensions[s]);
 				}
-				// if(algorithms.get(a) instanceof EnsembleClustererAbstract){
-				// EnsembleClustererAbstract alg = (EnsembleClustererAbstract)
-				// algorithms.get(a);
-				// alg.numDim = dimensions[s]; // for BICO
-				// alg.numPoints = lengths[s]; // for streamKM
-				// }
-
-				algorithms.get(a).prepareForUse();
+				if(algorithms.get(a) instanceof EnsembleClustererAbstract){
+					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract)	algorithms.get(a);
+					for(Algorithm alg : confStream.ensemble){
+						for(IParameter param : alg.parameters){
+							if(alg.clusterer instanceof StreamKM && param.getParameter().equals("l")){
+								IntegerParameter integerParam = (IntegerParameter) param;
+								integerParam.setValue(lengths[s]);
+							}
+							if(alg.clusterer instanceof BICO && param.getParameter().equals("d")){
+								IntegerParameter integerParam = (IntegerParameter) param;
+								integerParam.setValue(dimensions[s]);
+							}
+						}
+					}
+				}
 				algorithms.get(a).resetLearningImpl();
 				streams.get(s).restart();
 
