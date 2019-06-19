@@ -3,6 +3,7 @@
 	"ensembleSize": 25,
 	"newConfigurations": 10,
 	"keepCurrentModel": "true",
+	"reinitialiseWithMicro" : "true",
 	"preventAlgorithmDeath": "true",
 	"lambda": 0.05,
 	"algorithms": [
@@ -18,20 +19,20 @@
 				// {"parameter": "b", "type":"boolean", "value":"true"}
 			]
 		}
-		// ,
-		// {
-		// 	"algorithm": "clustree.ClusTree",
-		// 	"parameters": [
-		// 		{"parameter": "H", "type":"integer", "value":8, "range":[1,100]}
-		// 	]
-		// }
-		// ,
-		// {
-		// 	"algorithm": "clustream.WithKmeans",
-		// 	"parameters": [
-		// 		{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
-		// 		{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
-		// 	]
-		// }
+		,
+		{
+			"algorithm": "clustree.ClusTree",
+			"parameters": [
+				{"parameter": "H", "type":"integer", "value":8, "range":[1,100]}
+			]
+		}
+		,
+		{
+			"algorithm": "clustream.WithKmeans",
+			"parameters": [
+				{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
+				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
+			]
+		}
 	]
 }

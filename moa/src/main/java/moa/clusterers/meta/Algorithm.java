@@ -5,9 +5,15 @@ import java.util.Arrays;
 import com.github.javacliparser.Option;
 import com.github.javacliparser.Options;
 import com.yahoo.labs.samoa.instances.Attribute;
+import com.yahoo.labs.samoa.instances.DenseInstance;
+import com.yahoo.labs.samoa.instances.Instance;
 
+import moa.cluster.Cluster;
+import moa.cluster.Clustering;
+import moa.cluster.SphereCluster;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
+import moa.core.AutoExpandVector;
 import moa.options.ClassOption;
 
 public class Algorithm {
@@ -85,7 +91,7 @@ public class Algorithm {
 	}
 
 	// sample a new confguration based on the current one
-	public void sampleNewConfig(double lambda, boolean keepCurrentModel) {
+	public void sampleNewConfig(double lambda, boolean keepCurrentModel, boolean reinitialiseWithMicro) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
 			param.sampleNewConfig(lambda);
@@ -105,16 +111,37 @@ public class Algorithm {
 			}
 
 			// these changes do not transfer over directly since all algorithms chache the
-			// option values
-			// therefore we try to adjust the cached values if possible
-			((AbstractClusterer) this.clusterer).adjustParameters();
-			// System.out.println("Changed: " +
-			// this.clusterer.getCLICreationString(Clusterer.class));
-		} else {
+			// option values. Therefore we try to adjust the cached values if possible
+			try {
+				((AbstractClusterer) this.clusterer).adjustParameters();
+				// System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
+			} catch (UnsupportedOperationException e) {
+				// System.out.println("Cannot change parameters of " + this.algorithm + " on the fly, reset instead.");
+				keepCurrentModel = false;
+			}
+
+
+		} 
+		
+		if(!keepCurrentModel){
 			// Option 2: reinitialise the entire state
+			Clustering micro = this.clusterer.getMicroClusteringResult();
+			AutoExpandVector<Cluster> clusters = micro.getClusteringCopy();
+
 			this.init();
-			// System.out.println("Initialise: " +
-			// this.clusterer.getCLICreationString(Clusterer.class));
+			// System.out.println("Initialise: " +	this.clusterer.getCLICreationString(Clusterer.class));
+
+			if(reinitialiseWithMicro){
+				// System.out.println("Train with existing micro clusters.");
+				// train the algorithm with the micro clusters
+				for (Cluster cluster : clusters) {
+					SphereCluster c = (SphereCluster) cluster; // TODO are there only SphereCluster?
+					Instance inst = new DenseInstance(c.getWeight(), c.getCenter());
+					this.clusterer.trainOnInstance(inst);
+				}
+			}
+
+
 		}
 	}
 
