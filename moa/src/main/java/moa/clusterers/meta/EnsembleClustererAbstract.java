@@ -539,20 +539,20 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// algorithm.epsilonOption.setValue(.1);
 		algorithms.add(denstream);
 
-		// ClusTree clustree = new ClusTree();
-		// algorithms.add(clustree);
+		ClusTree clustree = new ClusTree();
+		algorithms.add(clustree);
 
-		// WithKmeans clustream = new WithKmeans();
-		// algorithms.add(clustream);
+		WithKmeans clustream = new WithKmeans();
+		algorithms.add(clustream);
 
-		// Dstream dstream = new Dstream();
-		// algorithms.add(dstream);
+		Dstream dstream = new Dstream();
+		algorithms.add(dstream);
 
-		// BICO bico = new BICO();
-		// algorithms.add(bico);
+		StreamKM streamkm = new StreamKM();
+		algorithms.add(streamkm);
 
-		// StreamKM streamkm = new StreamKM();
-		// algorithms.add(streamkm);
+		BICO bico = new BICO();
+		algorithms.add(bico);
 
 		for (int s = 0; s < streams.size(); s++) {
 			System.out.println("Stream: " + names[s]);
