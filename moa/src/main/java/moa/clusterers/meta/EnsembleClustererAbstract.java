@@ -85,7 +85,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
-	boolean verbose = false;
+	int verbose = 0;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -149,8 +149,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		// every windowSize we update the configurations
 		if (this.instancesSeen % this.settings.windowSize == 0) {
-			// System.out.println(" ");
-			if (this.verbose) {
+			if (this.verbose >= 1) {
 				System.out.println(" ");
 				System.out.println("-------------- Processed " + instancesSeen + " Instances --------------");
 			}
@@ -165,13 +164,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.silhouette = new SilhouetteCoefficient();
 		// train the random forest regressor based on the configuration performance
 		// and find the best performing algorithm
-		// System.out.println(" ");
-		// System.out.println("---- Evaluate performance of current ensemble:");
+		if(this.verbose==2){
+			System.out.println(" ");
+			System.out.println("---- Evaluate performance of current ensemble:");
+		}
 		evaluatePerformance();
 
-		if (this.verbose) {
+		if (this.verbose >= 1) {
 			System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
-			// System.out.println(" ");
 		}
 
 		// generate a new configuration and predict its performance using the random
@@ -215,7 +215,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				}
 			}
 
-			if (this.verbose) {
+			if (this.verbose >= 1) {
 				System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
 						+ "\t => \t Silhouette: " + performance);
 			}
@@ -252,8 +252,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
-			// System.out.println(" ");
-			// System.out.println("---- Sample new configuration " + z + ":");
+			if(this.verbose==2){
+				System.out.println(" ");
+				System.out.println("---- Sample new configuration " + z + ":");
+			}
 
 			// copy existing clusterer configuration
 			HashMap<Integer, Double> parents = new HashMap<Integer, Double>();
@@ -261,13 +263,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				parents.put(i, silhs.get(i));
 			}
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(parents);
-			// System.out.println("Selected Configuration " + parentIdx + " as parent: "
-			// +
-			// this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
+			if(this.verbose==2){
+				System.out.println("Selected Configuration " + parentIdx + " as parent: " + this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
+			}
 			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel);
 
 			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel, this.settings.reinitialiseWithMicro);
+			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel, this.settings.reinitialiseWithMicro, this.verbose);
 
 			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
@@ -279,7 +281,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// predict the performance of the new configuration using the trained adaptive
 			// random forest
 			double prediction = this.ARFregs.get(newAlgorithm.algorithm).getVotesForInstance(newInst)[0];
-			if (this.verbose) {
+			if (this.verbose >= 1) {
 				System.out.println("Based on " + parentIdx + " predict: "
 						+ newAlgorithm.clusterer.getCLICreationString(Clusterer.class) + "\t => \t Silhouette: "
 						+ prediction);
@@ -294,7 +296,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// if we still have open slots in the ensemble (not full)
 			if (this.ensemble.size() < this.settings.ensembleSize) {
-				if (this.verbose) {
+				if (this.verbose >= 1) {
 					System.out.println("Add configuration as new algorithm.");
 				}
 
@@ -314,7 +316,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				}
 				int replaceIdx = EnsembleClustererAbstract.sampleInvertProportionally(replace);
 
-				if (this.verbose) {
+				if (this.verbose >= 1) {
 					System.out.println("Replace algorithm: " + replaceIdx);
 				}
 
@@ -596,7 +598,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							pw.print(-1.0);
 						} else {
 							silh.evaluateClustering(result, null, windowPoints);
-							// System.out.println(silh.getLastValue(0));
+
 							if (result.size() == 0 || result.size() == 1) {
 								pw.print("nan");
 							} else {

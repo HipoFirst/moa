@@ -49,7 +49,7 @@ public class NumericalParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda) {
+	public void sampleNewConfig(double lambda, int verbose) {
 
 		// trying to balanced exploitation vs exploration by resetting the std
 		if (Math.random() < 0.001) {
@@ -61,11 +61,11 @@ public class NumericalParameter implements IParameter {
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
 		double newValue = trncnormal.sample();
 
-		// System.out.println("Sample new configuration for numerical parameter -" +
-		// this.parameter + " with mean: "
-		// + this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " +
-		// this.range[1] + "\t=>\t -"
-		// + this.parameter + " " + newValue);
+		if (verbose == 3) {
+			System.out.println("Sample new configuration for numerical parameter -" + this.parameter + " with mean: "
+					+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1]
+					+ "\t=>\t -" + this.parameter + " " + newValue);
+		}
 
 		this.value = newValue;
 

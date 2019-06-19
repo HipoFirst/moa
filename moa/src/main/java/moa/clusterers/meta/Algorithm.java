@@ -35,6 +35,7 @@ public class Algorithm {
 		if (keepCurrentModel) {
 			this.clusterer = (AbstractClusterer) x.clusterer.copy();
 		}
+
 	}
 
 	// init constructor
@@ -46,7 +47,7 @@ public class Algorithm {
 		this.attributes = new Attribute[x.parameters.length];
 		for (int i = 0; i < x.parameters.length; i++) {
 			ParameterConfiguration paramConfig = x.parameters[i];
-			if (paramConfig.type.equals("numeric")) {
+			if (paramConfig.type.equals("numeric") || paramConfig.type.equals("real")) {
 				NumericalParameter param = new NumericalParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter());
@@ -54,11 +55,11 @@ public class Algorithm {
 				IntegerParameter param = new IntegerParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter());
-			} else if (paramConfig.type.equals("nominal")) {
+			} else if (paramConfig.type.equals("nominal") || paramConfig.type.equals("categorical")) {
 				CategoricalParameter param = new CategoricalParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
-			} else if (paramConfig.type.equals("boolean")) {
+			} else if (paramConfig.type.equals("boolean") || paramConfig.type.equals("flag")) {
 				BooleanParameter param = new BooleanParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
@@ -91,10 +92,10 @@ public class Algorithm {
 	}
 
 	// sample a new confguration based on the current one
-	public void sampleNewConfig(double lambda, boolean keepCurrentModel, boolean reinitialiseWithMicro) {
+	public void sampleNewConfig(double lambda, boolean keepCurrentModel, boolean reinitialiseWithMicro, int verbose) {
 		// sample new configuration from the parent
 		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(lambda);
+			param.sampleNewConfig(lambda, verbose);
 		}
 
 		if (keepCurrentModel) {
@@ -114,25 +115,32 @@ public class Algorithm {
 			// option values. Therefore we try to adjust the cached values if possible
 			try {
 				((AbstractClusterer) this.clusterer).adjustParameters();
-				// System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
+				if (verbose >= 2) {
+					System.out.println("Changed: " + this.clusterer.getCLICreationString(Clusterer.class));
+				}
 			} catch (UnsupportedOperationException e) {
-				// System.out.println("Cannot change parameters of " + this.algorithm + " on the fly, reset instead.");
+				if (verbose >= 2) {
+					System.out.println("Cannot change parameters of " + this.algorithm + " on the fly, reset instead.");
+				}
 				keepCurrentModel = false;
 			}
 
+		}
 
-		} 
-		
-		if(!keepCurrentModel){
+		if (!keepCurrentModel) {
 			// Option 2: reinitialise the entire state
 			Clustering micro = this.clusterer.getMicroClusteringResult();
 			AutoExpandVector<Cluster> clusters = micro.getClusteringCopy();
 
 			this.init();
-			// System.out.println("Initialise: " +	this.clusterer.getCLICreationString(Clusterer.class));
+			if (verbose >= 2) {
+				System.out.println("Initialise: " + this.clusterer.getCLICreationString(Clusterer.class));
+			}
 
-			if(reinitialiseWithMicro){
-				// System.out.println("Train with existing micro clusters.");
+			if (reinitialiseWithMicro) {
+				if (verbose >= 2) {
+					System.out.println("Train with existing micro clusters.");
+				}
 				// train the algorithm with the micro clusters
 				for (Cluster cluster : clusters) {
 					SphereCluster c = (SphereCluster) cluster; // TODO are there only SphereCluster?
@@ -140,7 +148,6 @@ public class Algorithm {
 					this.clusterer.trainOnInstance(inst);
 				}
 			}
-
 
 		}
 	}

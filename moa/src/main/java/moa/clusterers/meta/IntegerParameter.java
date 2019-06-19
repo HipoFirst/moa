@@ -36,7 +36,7 @@ public class IntegerParameter implements IParameter {
 	public String getCLIString() {
 		return ("-" + this.parameter + " " + this.value);
 	}
-	
+
 	public String getCLIValueString() {
 		return ("" + this.value);
 	}
@@ -49,18 +49,20 @@ public class IntegerParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda) {
+	public void sampleNewConfig(double lambda, int verbose) {
 		// update configuration
 		// for integer features use truncated normal distribution
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
 		int newValue = (int) Math.round(trncnormal.sample());
-		// System.out.println("Sample new configuration for integer parameter -" + this.parameter + " with mean: "
-		// 		+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1] + "\t=>\t -"
-		// 		+ this.parameter + " " + newValue);
+		if (verbose == 3) {
+			System.out.println("Sample new configuration for integer parameter -" + this.parameter + " with mean: "
+					+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1]
+					+ "\t=>\t -" + this.parameter + " " + newValue);
+		}
 
 		this.value = newValue;
 
 		// adapt distribution
-		this.std = this.std * Math.pow(2,-1*lambda);
+		this.std = this.std * Math.pow(2, -1 * lambda);
 	}
 }

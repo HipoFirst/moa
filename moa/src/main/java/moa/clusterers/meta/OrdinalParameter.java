@@ -20,7 +20,7 @@ public class OrdinalParameter implements IParameter {
 		this.std = x.std;
 		this.attribute = x.attribute;
 	}
-	
+
 	// init constructor
 	public OrdinalParameter(ParameterConfiguration x) {
 		this.parameter = x.parameter;
@@ -36,7 +36,6 @@ public class OrdinalParameter implements IParameter {
 		this.attribute = new Attribute(x.parameter);
 
 	}
-
 
 	public OrdinalParameter copy() {
 		return new OrdinalParameter(this);
@@ -58,21 +57,24 @@ public class OrdinalParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda) {
+	public void sampleNewConfig(double lambda, int verbose) {
 		// update configuration
 		// treat index of range as integer parameter
 		TruncatedNormal trncnormal = new TruncatedNormal(this.numericValue, this.std, (double) (this.range.length - 1),
 				0.0); // limits are the indexes of the range
 		int newValue = (int) Math.round(trncnormal.sample());
-		// System.out.println("Sample new configuration for ordinal parameter -" + this.parameter + " with mean: "
-		// 		+ this.numericValue + ", std: " + this.std + ", lb: " + 0 + ", ub: " + (this.range.length - 1)
-		// 		+ "\t=>\t -" + this.parameter + " " + this.range[newValue] + " (" + newValue + ")");
+
+		if (verbose == 3) {
+			System.out.println("Sample new configuration for ordinal parameter -" + this.parameter + " with mean: "
+					+ this.numericValue + ", std: " + this.std + ", lb: " + 0 + ", ub: " + (this.range.length - 1)
+					+ "\t=>\t -" + this.parameter + " " + this.range[newValue] + " (" + newValue + ")");
+		}
 
 		this.numericValue = newValue;
 		this.value = this.range[this.numericValue];
 
 		// adapt distribution
-		this.std = this.std * Math.pow(2,-1*lambda);
+		this.std = this.std * Math.pow(2, -1 * lambda);
 	}
 
 }

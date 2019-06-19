@@ -48,7 +48,7 @@ public class CategoricalParameter implements IParameter {
 	public String getCLIString() {
 		return ("-" + this.parameter + " " + this.value);
 	}
-	
+
 	public String getCLIValueString() {
 		return ("" + this.value);
 	}
@@ -65,29 +65,35 @@ public class CategoricalParameter implements IParameter {
 		return this.range;
 	}
 
-	public void sampleNewConfig(double lambda) {
+	public void sampleNewConfig(double lambda, int verbose) {
 
-		HashMap<Integer,Double> map = new HashMap<Integer,Double>();
-		for(int i=0; i < this.probabilities.size(); i++){
-				map.put(i, this.probabilities.get(i));
+		HashMap<Integer, Double> map = new HashMap<Integer, Double>();
+		for (int i = 0; i < this.probabilities.size(); i++) {
+			map.put(i, this.probabilities.get(i));
 		}
 		// update configuration
 		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map);
 		String newValue = this.range[this.numericValue];
 
-		System.out.print("Sample new configuration for nominal parameter -" + this.parameter + "with probabilities");
-		for (int i = 0; i < this.probabilities.size(); i++) {
-			System.out.print(" " + this.probabilities.get(i));
+		if (verbose == 3) {
+			System.out
+					.print("Sample new configuration for nominal parameter -" + this.parameter + "with probabilities");
+			for (int i = 0; i < this.probabilities.size(); i++) {
+				System.out.print(" " + this.probabilities.get(i));
+			}
+			System.out.println("\t=>\t -" + this.parameter + " " + newValue);
 		}
-		System.out.println("\t=>\t -" + this.parameter + " " + newValue);
 		this.value = newValue;
 
 		// adapt distribution
 		// TODO not directly transferable from irace: (1-((iter -1) / maxIter))
-		// this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) + (1.0/iter));
-		this.probabilities.set(this.numericValue, this.probabilities.get(this.numericValue) * (2 - Math.pow(2,-1*lambda)));
+		// this.probabilities.set(this.numericValue,
+		// this.probabilities.get(this.numericValue) + (1.0/iter));
+		this.probabilities.set(this.numericValue,
+				this.probabilities.get(this.numericValue) * (2 - Math.pow(2, -1 * lambda)));
 
-		// divide by sum (TODO is this even necessary with our proportional sampling strategy?)
+		// divide by sum (TODO is this even necessary with our proportional sampling
+		// strategy?)
 		double sum = 0.0;
 		for (int i = 0; i < this.probabilities.size(); i++) {
 			sum += this.probabilities.get(i);
