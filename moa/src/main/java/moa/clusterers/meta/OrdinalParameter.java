@@ -64,7 +64,7 @@ public class OrdinalParameter implements IParameter {
 				0.0); // limits are the indexes of the range
 		int newValue = (int) Math.round(trncnormal.sample());
 
-		if (verbose == 3) {
+		if (verbose >= 3) {
 			System.out.println("Sample new configuration for ordinal parameter -" + this.parameter + " with mean: "
 					+ this.numericValue + ", std: " + this.std + ", lb: " + 0 + ", ub: " + (this.range.length - 1)
 					+ "\t=>\t -" + this.parameter + " " + this.range[newValue] + " (" + newValue + ")");

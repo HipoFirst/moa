@@ -23,7 +23,7 @@ public class Algorithm {
 	public Attribute[] attributes;
 
 	// copy constructor
-	public Algorithm(Algorithm x, boolean keepCurrentModel) {
+	public Algorithm(Algorithm x, boolean keepCurrentModel, int verbose) {
 
 		// make a (mostly) deep copy of the algorithm
 		this.algorithm = x.algorithm;
@@ -33,7 +33,14 @@ public class Algorithm {
 			this.parameters[i] = x.parameters[i].copy();
 		}
 		if (keepCurrentModel) {
-			this.clusterer = (AbstractClusterer) x.clusterer.copy();
+			try{
+				this.clusterer = (AbstractClusterer) x.clusterer.copy();
+			} catch (RuntimeException e){
+				if(verbose >= 2){
+					System.out.println("Copy failed for " + x.clusterer.getCLICreationString(Clusterer.class) + "! Reinitialise instead.");		
+				} 
+				this.init();
+			}
 		}
 
 	}
@@ -47,7 +54,7 @@ public class Algorithm {
 		this.attributes = new Attribute[x.parameters.length];
 		for (int i = 0; i < x.parameters.length; i++) {
 			ParameterConfiguration paramConfig = x.parameters[i];
-			if (paramConfig.type.equals("numeric") || paramConfig.type.equals("real")) {
+			if (paramConfig.type.equals("numeric") || paramConfig.type.equals("float") || paramConfig.type.equals("real")) {
 				NumericalParameter param = new NumericalParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter());
@@ -129,8 +136,12 @@ public class Algorithm {
 
 		if (!keepCurrentModel) {
 			// Option 2: reinitialise the entire state
-			Clustering micro = this.clusterer.getMicroClusteringResult();
-			AutoExpandVector<Cluster> clusters = micro.getClusteringCopy();
+			Clustering result = this.clusterer.getMicroClusteringResult();
+			if(result==null){
+				result = this.clusterer.getClusteringResult();
+			}
+
+			AutoExpandVector<Cluster> clusters = result.getClusteringCopy();
 
 			this.init();
 			if (verbose >= 2) {

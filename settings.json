@@ -5,6 +5,7 @@
 	"keepCurrentModel": "true",
 	"reinitialiseWithMicro" : "true",
 	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
 	"lambda": 0.05,
 	"algorithms": [
 		{
@@ -24,17 +25,43 @@
 		{
 			"algorithm": "clustree.ClusTree",
 			"parameters": [
-				{"parameter": "H", "type":"integer", "value":8, "range":[1,20]}//,
-				// {"parameter": "B", "type":"boolean", "value":"false"}
+				{"parameter": "H", "type":"integer", "value":8, "range":[1,20]},
+				{"parameter": "B", "type":"boolean", "value":"true"}
 			]
 		}
 		,
 		{
 			"algorithm": "clustream.WithKmeans",
 			"parameters": [
+				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
 				{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
 				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
 			]
 		}
+		,
+		{
+			"algorithm": "dstream.Dstream",
+			"parameters": [
+				{"parameter": "m", "type":"numeric", "value":3, "range":[1.001,10000]},
+				{"parameter": "l", "type":"numeric", "value":0.8, "range":[0.001, 0.999]}
+			]
+		}
+		// ,
+		// {
+		// 	"algorithm": "streamkm.StreamKM",
+		// 	"parameters": [
+		// 		{"parameter": "s", "type":"integer", "value":10000, "range":[10,100000]},
+		// 		{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]}
+		// 	]
+		// }
+		// ,
+		// {
+		// 	"algorithm": "kmeanspm.BICO",
+		// 	"parameters": [
+		// 		{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+		// 		{"parameter": "n", "type":"integer", "value":1000, "range":[1,1000]},
+		// 		{"parameter": "p", "type":"integer", "value":10, "range":[1,1000]}
+		// 	]
+		// }
 	]
 }

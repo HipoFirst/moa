@@ -81,7 +81,7 @@ public class BooleanParameter implements IParameter {
 		// update configuration
 		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map);
 		String newValue = this.range[this.numericValue];
-		if (verbose == 3) {
+		if (verbose >= 3) {
 			System.out
 					.print("Sample new configuration for boolean parameter -" + this.parameter + " with probabilities");
 			for (int i = 0; i < this.probabilities.size(); i++) {

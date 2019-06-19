@@ -873,7 +873,10 @@ public class ClusTree extends AbstractClusterer{
     }
 
     public void adjustParameters() {
-        breadthFirstStrat = breadthFirstStrategyOption.isSet();
+        // breadthFirstStrat = breadthFirstStrategyOption.isSet();
+        if(breadthFirstStrat != breadthFirstStrategyOption.isSet()){
+            throw new UnsupportedOperationException("Cannot change breadthFirstStrategy on the fly");
+        }
         negLambda = (1.0 / (double) horizonOption.getValue())
                 * (Math.log(weightThreshold) / Math.log(2));
         maxHeight = maxHeightOption.getValue();

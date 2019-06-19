@@ -3,7 +3,9 @@ package moa.clusterers.meta;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,6 +71,7 @@ class GeneralConfiguration {
 	public double lambda;
 	public boolean preventAlgorithmDeath;
 	public boolean reinitialiseWithMicro;
+	public boolean evaluateMacro;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -85,7 +88,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
-	int verbose = 0;
+	int verbose = 3;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -141,7 +144,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.windowPoints.add(point); // remember points of the current window
 		this.instancesSeen++;
 
-
 		// train all models with the instance
 		for (int i = 0; i < this.ensemble.size(); i++) {
 			this.ensemble.get(i).clusterer.trainOnInstance(inst);
@@ -164,7 +166,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.silhouette = new SilhouetteCoefficient();
 		// train the random forest regressor based on the configuration performance
 		// and find the best performing algorithm
-		if(this.verbose==2){
+		if (this.verbose == 2) {
 			System.out.println(" ");
 			System.out.println("---- Evaluate performance of current ensemble:");
 		}
@@ -186,11 +188,27 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		double maxVal = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i < this.ensemble.size(); i++) {
-			// get micro clusters of this clusterer
-			Clustering result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
+
+			// compare micro-clusters
+			Clustering result = null;
+			if (!this.settings.evaluateMacro) {
+				result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
+			}
+			// compare macro-clusters
+			if (this.settings.evaluateMacro || result == null) {
+				// this is also the fallback for algorithms which dont export micro clusters
+				// Note: This is not a fair comparison but otherwise we would have to discard
+				// these algorithms entirely.
+				if (this.verbose >= 2)
+					System.out.println("Micro-Cluster not available for "
+							+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
+							+ ". Try Macro-Clusters instead.");
+				result = this.ensemble.get(i).clusterer.getClusteringResult();
+			}
+
 			double performance;
 			if (result == null) {
-				throw new RuntimeException("Micro clusters not available for "
+				throw new RuntimeException("Neither micro- nor macro clusters available for "
 						+ this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
 			} else if (result.size() == 0 || result.size() == 1) {
 				performance = -1.0; // discourage solutions with no or a single cluster
@@ -252,7 +270,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
-			if(this.verbose==2){
+			if (this.verbose == 2) {
 				System.out.println(" ");
 				System.out.println("---- Sample new configuration " + z + ":");
 			}
@@ -263,13 +281,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				parents.put(i, silhs.get(i));
 			}
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(parents);
-			if(this.verbose==2){
-				System.out.println("Selected Configuration " + parentIdx + " as parent: " + this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
+			if (this.verbose == 2) {
+				System.out.println("Selected Configuration " + parentIdx + " as parent: "
+						+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 			}
-			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel);
+			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel,
+					this.verbose);
 
 			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel, this.settings.reinitialiseWithMicro, this.verbose);
+			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel,
+					this.settings.reinitialiseWithMicro, this.verbose);
 
 			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
@@ -523,14 +544,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// WithKmeans clustream = new WithKmeans();
 		// algorithms.add(clustream);
 
+		// Dstream dstream = new Dstream();
+		// algorithms.add(dstream);
+
 		// BICO bico = new BICO();
 		// algorithms.add(bico);
 
-		// StreamKM streamkm = new StreamKM(); // errors
+		// StreamKM streamkm = new StreamKM();
 		// algorithms.add(streamkm);
-
-		// Dstream dstream = new Dstream(); // no micro clusters exported
-		// algorithms.add(dstream);
 
 		for (int s = 0; s < streams.size(); s++) {
 			System.out.println("Stream: " + names[s]);
@@ -541,40 +562,36 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				System.out.println("Algorithm: "
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class));
 
-				// TODO these are ugly special cases
+				// TODO these are super ugly special cases
 				if (algorithms.get(a) instanceof StreamKM) {
 					algorithms.get(a).getOptions().getOption('l').setValueViaCLIString("" + lengths[s]);
 				}
 				if (algorithms.get(a) instanceof BICO) {
 					algorithms.get(a).getOptions().getOption('d').setValueViaCLIString("" + dimensions[s]);
 				}
+				// if(algorithms.get(a) instanceof EnsembleClustererAbstract){
+				// EnsembleClustererAbstract alg = (EnsembleClustererAbstract)
+				// algorithms.get(a);
+				// alg.numDim = dimensions[s]; // for BICO
+				// alg.numPoints = lengths[s]; // for streamKM
+				// }
 
 				algorithms.get(a).prepareForUse();
 				algorithms.get(a).resetLearningImpl();
 				streams.get(s).restart();
 
-				File f = new File(names[s] + "_"
+				File resultFile = new File(names[s] + "_"
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
 						+ ".txt");
-				PrintWriter pw = new PrintWriter(f);
+				PrintWriter resultWriter = new PrintWriter(resultFile);
 
-				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-					pw.print("points\tsilhouette");
-					EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
-					Algorithm alg2 = alg.ensemble.get(alg.bestModel);
-					for (int j = 0; j < alg2.parameters.length; j++) {
-						pw.print("\t" + alg2.parameters[j].getParameter());
-					}
-				} else {
-					pw.print("points\tsilhouette");
-				}
-				pw.print("\n");
-		
+				resultWriter.println("points\tsilhouette");
+
 				ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
 				// ArrayList<Instance> windowInstances = new ArrayList<Instance>(windowSize);
 				for (int d = 1; d < lengths[s]; d++) {
 					Instance inst = streams.get(s).nextInstance().getData();
-	
+
 					// apparently numAttributes is the class index when no class exists
 					if (inst.classIndex() < inst.numAttributes()) {
 						inst.deleteAttributeAt(inst.classIndex()); // remove class label
@@ -588,43 +605,80 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					if (d % windowSize == 0) {
 
 						SilhouetteCoefficient silh = new SilhouetteCoefficient();
-						Clustering result = algorithms.get(a).getMicroClusteringResult();
 
-						
-						pw.print(d);
-						pw.print("\t");
+						Clustering result = null;
+						boolean evaluateMacro = false;
+
+						// compare micro-clusters
+						if (!evaluateMacro) {
+							result = algorithms.get(a).getMicroClusteringResult();
+						}
+						// compare macro-clusters
+						if (evaluateMacro || result == null) {
+							result = algorithms.get(a).getClusteringResult();
+						}
+
+						resultWriter.print(d);
+						resultWriter.print("\t");
 
 						if (result == null) {
-							pw.print(-1.0);
+							resultWriter.print(-1.0);
 						} else {
 							silh.evaluateClustering(result, null, windowPoints);
 
 							if (result.size() == 0 || result.size() == 1) {
-								pw.print("nan");
+								resultWriter.print("nan");
 							} else {
-								pw.print(silh.getLastValue(0));
+								resultWriter.print(silh.getLastValue(0));
 							}
 						}
+						resultWriter.print("\n");
+
+
+						// export param settings, each algorithm into separate file but only
+						// for current best algorithm
 						if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-							EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
-							Algorithm alg2 = alg.ensemble.get(alg.bestModel);
-							for (int p = 0; p < alg2.parameters.length; p++) {
-								pw.print("\t" + alg2.parameters[p].getValue());
+							EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
+							Algorithm alg = confStream.ensemble.get(confStream.bestModel);
+
+							File paramFile = new File(names[s] + "_" + ClassOption
+									.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class) + "_"
+									+ alg.algorithm + ".txt");
+
+							PrintWriter paramWriter = new PrintWriter(new FileOutputStream(paramFile, true)); // append
+							BufferedReader br = new BufferedReader(new FileReader(paramFile));
+
+							// add header to param file
+							try {
+								if (br.readLine() == null) {
+									paramWriter.print("points");
+									for (int p = 0; p < alg.parameters.length; p++) {
+										paramWriter.print("\t" + alg.parameters[p].getParameter());
+									}
+									paramWriter.print("\n");
+								}
+							} catch (IOException e) {
 							}
+							
+							// add param values
+							paramWriter.print(d);
+							for (int p = 0; p < alg.parameters.length; p++) {
+								paramWriter.print("\t" + alg.parameters[p].getValue());
+							}
+							paramWriter.print("\n");
+							paramWriter.close();
 						}
-						pw.print("\n");
 
 
 						// // then train
 						// for(Instance inst2 : windowInstances){
-						// 	algorithms.get(a).trainOnInstanceImpl(inst2);
+						// algorithms.get(a).trainOnInstanceImpl(inst2);
 						// }
 
 						// windowInstances.clear();
 
-
 						windowPoints.clear();
-						pw.flush();
+						resultWriter.flush();
 
 					}
 
@@ -632,7 +686,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						System.out.println("Observation: " + d);
 					}
 				}
-				pw.close();
+				resultWriter.close();
 			}
 		}
 	}

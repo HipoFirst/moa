@@ -61,7 +61,7 @@ public class NumericalParameter implements IParameter {
 		TruncatedNormal trncnormal = new TruncatedNormal(this.value, this.std, this.range[0], this.range[1]);
 		double newValue = trncnormal.sample();
 
-		if (verbose == 3) {
+		if (verbose >= 3) {
 			System.out.println("Sample new configuration for numerical parameter -" + this.parameter + " with mean: "
 					+ this.value + ", std: " + this.std + ", lb: " + this.range[0] + ", ub: " + this.range[1]
 					+ "\t=>\t -" + this.parameter + " " + newValue);
