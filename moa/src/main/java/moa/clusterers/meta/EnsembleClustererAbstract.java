@@ -661,7 +661,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							// add header to param file
 							try {
 								if (br.readLine() == null) {
-									paramWriter.print("points");
+									paramWriter.print("points\tsilhouette");
 									for (int p = 0; p < alg.parameters.length; p++) {
 										paramWriter.print("\t" + alg.parameters[p].getParameter());
 									}
@@ -672,6 +672,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							
 							// add param values
 							paramWriter.print(d);
+							paramWriter.print("\t" + silh.getLastValue(0));
 							for (int p = 0; p < alg.parameters.length; p++) {
 								paramWriter.print("\t" + alg.parameters[p].getValue());
 							}
