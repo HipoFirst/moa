@@ -11,7 +11,11 @@ public class ConfStream extends EnsembleClustererAbstract {
 
 	@Override
 	public Clustering getMicroClusteringResult() {
-		return this.ensemble.get(this.bestModel).clusterer.getMicroClusteringResult();
+		Clustering result = this.ensemble.get(this.bestModel).clusterer.getMicroClusteringResult();
+		if(result == null){
+			result = this.ensemble.get(this.bestModel).clusterer.getClusteringResult();
+		}
+		return result;
 	}
 
 	public static void main(String[] args) {

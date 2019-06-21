@@ -34,8 +34,12 @@ public class ConfStreamMerge extends EnsembleClustererAbstract {
 
 		// get micro clusters for all ensembles
 		for (int i = 0; i < this.ensemble.size(); i++) {
-			Clustering clustering = this.ensemble.get(i).clusterer.getMicroClusteringResult();
-			AutoExpandVector<Cluster> clusters = clustering.getClustering();
+			Clustering result = this.ensemble.get(i).clusterer.getMicroClusteringResult();
+			if(result == null){
+				result = this.ensemble.get(i).clusterer.getClusteringResult();
+			}
+
+			AutoExpandVector<Cluster> clusters = result.getClustering();
 			// and concatenate them to a single cluster
 			for (int j = 0; j < clusters.size(); j++) {
 				SphereCluster clstr = (SphereCluster) clusters.get(j); // TODO are there only SphereCluster?

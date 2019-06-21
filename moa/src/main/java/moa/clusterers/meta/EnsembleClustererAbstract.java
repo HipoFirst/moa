@@ -89,7 +89,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
-	int verbose = 3;
+	int verbose = 0;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -187,7 +187,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	}
 
 	protected void evaluatePerformance() {
-
+		
 		double maxVal = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i < this.ensemble.size(); i++) {
 
@@ -509,17 +509,17 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(rbf);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "sensor.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/sensor_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "powersupply.csv", "",	false);
+		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/powersupply_relevant_standardized.csv", "",	false);
 		streams.add(file);
 
 		
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "covertype.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/covertype_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
