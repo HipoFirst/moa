@@ -60,11 +60,7 @@
 			"algorithm": "kmeanspm.BICO",
 			"parameters": [
 				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
-<<<<<<< HEAD
 				{"parameter": "n", "type":"integer", "value":1000, "range":[1,2000]},
-=======
-				{"parameter": "n", "type":"integer", "value":1000, "range":[1,1000]},
->>>>>>> ebb6fb61d1a69fd95c937ba00f8911c2ad230622
 				{"parameter": "p", "type":"integer", "value":10, "range":[1,20]},
 				{"parameter": "d", "type":"integer", "value":100, "fixed":"true"}
 			]

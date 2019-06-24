@@ -513,13 +513,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-				"~/Downloads/powersupply_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "~/Downloads/powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-				"~/Downloads/covertype_relevant_standardized.csv.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "~/Downloads/covertype_relevant_standardized.csv.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
