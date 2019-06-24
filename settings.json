@@ -39,29 +39,29 @@
 			]
 		}
 		,
-		{
-			"algorithm": "dstream.Dstream",
-			"parameters": [
-				{"parameter": "m", "type":"numeric", "value":3, "range":[1.001,10000]},
-				{"parameter": "l", "type":"numeric", "value":0.8, "range":[0.001, 0.999]}
-			]
-		}
-		,
-		{
-			"algorithm": "streamkm.StreamKM",
-			"parameters": [
-				{"parameter": "s", "type":"integer", "value":10000, "range":[10,100000]},
-				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
-				{"parameter": "l", "type":"integer", "value":10000, "fixed":"true"}
-			]
-		}
-		,
+		// {
+		// 	"algorithm": "dstream.Dstream",
+		// 	"parameters": [
+		// 		{"parameter": "m", "type":"numeric", "value":3, "range":[1.001,10000]},
+		// 		{"parameter": "l", "type":"numeric", "value":0.8, "range":[0.001, 0.999]}
+		// 	]
+		// }
+		// ,
+		// {
+		// 	"algorithm": "streamkm.StreamKM",
+		// 	"parameters": [
+		// 		{"parameter": "s", "type":"integer", "value":10000, "range":[10,100000]},
+		// 		{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+		// 		{"parameter": "l", "type":"integer", "value":10000, "fixed":"true"}
+		// 	]
+		// }
+		// ,
 		{
 			"algorithm": "kmeanspm.BICO",
 			"parameters": [
 				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
 				{"parameter": "n", "type":"integer", "value":1000, "range":[1,1000]},
-				{"parameter": "p", "type":"integer", "value":10, "range":[1,1000]},
+				{"parameter": "p", "type":"integer", "value":10, "range":[1,20]},
 				{"parameter": "d", "type":"integer", "value":100, "fixed":"true"}
 			]
 		}
