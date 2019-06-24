@@ -508,18 +508,18 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(rbf);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/sensor_relevant_standardized.csv",
+		file.csvFileOption = new FileOption("", 'z', "", "~/Downloads/sensor_relevant_standardized.csv",
 				"", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
 		file.csvFileOption = new FileOption("", 'z', "",
-				"/home/matthias/Downloads/powersupply_relevant_standardized.csv", "", false);
+				"~/Downloads/powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
 		file.csvFileOption = new FileOption("", 'z', "",
-				"/home/matthias/Downloads/covertype_relevant_standardized.csv.csv", "", false);
+				"~/Downloads/covertype_relevant_standardized.csv.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
@@ -595,18 +595,29 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				PrintWriter ensembleWriter = null;
 				// header of proportion file
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-					EnsembleClustererAbstract alg = (EnsembleClustererAbstract) algorithms.get(a);
+					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 
 					File proportionFile = new File(
-							ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
+							ClassOption.stripPackagePrefix(names[s] + "_" + algorithms.get(a).getClass().getName(), Clusterer.class)
 									+ "_ensemble.txt");
 					ensembleWriter = new PrintWriter(proportionFile);
 
 					ensembleWriter.print("points");
-					for (int i = 0; i < alg.settings.ensembleSize; i++) {
+					for (int i = 0; i < confStream.settings.ensembleSize; i++) {
 						ensembleWriter.print("\t" + "Algorithm_" + i);
 					}
 					ensembleWriter.println();
+
+					ensembleWriter.print(0);
+					for (int i = 0; i < confStream.settings.ensembleSize; i++) {
+						if(i >= confStream.ensemble.size()){
+							ensembleWriter.print("\t" + "Empty");
+						} else{
+							ensembleWriter.print("\t" + confStream.ensemble.get(i).algorithm);
+						}
+					}
+					ensembleWriter.print("\n");
+					ensembleWriter.flush();
 				}
 
 				// header of result file
@@ -692,9 +703,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							paramWriter.print("\n");
 							paramWriter.close();
 
+							// ensemble compositions
 							ensembleWriter.print(d);
-							for (int i = 0; i < confStream.ensemble.size(); i++) {
-								ensembleWriter.print("\t" + confStream.ensemble.get(i).algorithm);
+							for (int i = 0; i < confStream.settings.ensembleSize; i++) {
+								if(i >= confStream.ensemble.size()){
+									ensembleWriter.print("\t" + "Empty");
+								} else{
+									ensembleWriter.print("\t" + confStream.ensemble.get(i).algorithm);
+								}
 							}
 							ensembleWriter.print("\n");
 							ensembleWriter.flush();
