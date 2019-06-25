@@ -1,7 +1,7 @@
 {
 	"windowSize": 1000,
-	"ensembleSize": 30,
-	"newConfigurations": 3,
+	"ensembleSize": 25,
+	"newConfigurations": 5,
 	"keepCurrentModel": "true",
 	"reinitialiseWithMicro" : "true",
 	"preventAlgorithmDeath": "true",

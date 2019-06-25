@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import com.github.javacliparser.ClassOption;
@@ -381,12 +382,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				count.merge(this.ensemble.get(i).algorithm, 1, Integer::sum);
 			}
 			// dont replace single occurences unless they are the parent
-			int x = 0;
-			for (String key : count.keySet()) {
-				if (count.get(key) == 1 && parentIdx != x) {
-					replace.remove(x);
+			Iterator<Integer> it = replace.keySet().iterator();
+			while(it.hasNext()) {
+				Integer x = it.next();
+				if (count.get(this.ensemble.get(x).algorithm) == 1 && parentIdx != x) {
+					it.remove();
 				}
-				x++;
 			}
 		}
 
