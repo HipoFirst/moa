@@ -508,16 +508,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(rbf);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "~/Downloads/sensor_relevant_standardized.csv",
+		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/sensor_relevant_standardized.csv",
 				"", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "~/Downloads/powersupply_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "~/Downloads/covertype_relevant_standardized.csv.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/covertype_relevant_standardized.csv.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
@@ -589,14 +589,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
 						+ ".txt");
 				PrintWriter resultWriter = new PrintWriter(resultFile);
-
-				File proportionFile = new File(
-					ClassOption.stripPackagePrefix(names[s] + "_" + algorithms.get(a).getClass().getName(), Clusterer.class)
-							+ "_ensemble.txt");
-				PrintWriter ensembleWriter = new PrintWriter(proportionFile);
 				
+				PrintWriter ensembleWriter = null;
+
 				// header of proportion file
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
+					File ensembleFile = new File(
+						ClassOption.stripPackagePrefix(names[s] + "_" + algorithms.get(a).getClass().getName(), Clusterer.class)
+								+ "_ensemble.txt");
+					ensembleWriter = new PrintWriter(ensembleFile);
+
 					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 
 					ensembleWriter.print("points");
@@ -731,8 +733,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					}
 				}
 				resultWriter.close();
-				ensembleWriter.close();
+				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
+					ensembleWriter.close();
+				}
 			}
+
 		}
 	}
 }
