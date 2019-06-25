@@ -381,12 +381,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				count.merge(this.ensemble.get(i).algorithm, 1, Integer::sum);
 			}
 			// dont replace single occurences unless they are the parent
-			int x = 0;
-			for (String key : count.keySet()) {
-				if (count.get(key) == 1 && parentIdx != x) {
+			for (int x : replace.keySet()) {
+				if (count.get(this.ensemble.get(x).algorithm) == 1 && parentIdx != x) {
 					replace.remove(x);
 				}
-				x++;
 			}
 		}
 
