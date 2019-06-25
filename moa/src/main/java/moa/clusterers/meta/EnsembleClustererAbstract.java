@@ -590,15 +590,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ ".txt");
 				PrintWriter resultWriter = new PrintWriter(resultFile);
 
-				PrintWriter ensembleWriter = null;
+				File proportionFile = new File(
+					ClassOption.stripPackagePrefix(names[s] + "_" + algorithms.get(a).getClass().getName(), Clusterer.class)
+							+ "_ensemble.txt");
+				PrintWriter ensembleWriter = new PrintWriter(proportionFile);
+				
 				// header of proportion file
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
-
-					File proportionFile = new File(
-							ClassOption.stripPackagePrefix(names[s] + "_" + algorithms.get(a).getClass().getName(), Clusterer.class)
-									+ "_ensemble.txt");
-					ensembleWriter = new PrintWriter(proportionFile);
 
 					ensembleWriter.print("points");
 					for (int i = 0; i < confStream.settings.ensembleSize; i++) {
