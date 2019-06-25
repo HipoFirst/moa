@@ -590,12 +590,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
 						+ ".txt");
 				PrintWriter resultWriter = new PrintWriter(resultFile);
-				
+
 				PrintWriter ensembleWriter = null;
 
 				// header of proportion file
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-					File ensembleFile = new File(names[s] + "_" + 
+					File ensembleFile = new File(names[s] + "_" +
 						ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
 								+ "_ensemble.txt");
 					ensembleWriter = new PrintWriter(ensembleFile);
