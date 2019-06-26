@@ -21,6 +21,8 @@ public class Algorithm {
 	public IParameter[] parameters;
 	public AbstractClusterer clusterer;
 	public Attribute[] attributes;
+	public double prediction;
+	public double silhouette;
 
 	// copy constructor
 	public Algorithm(Algorithm x, boolean keepCurrentModel, int verbose) {
