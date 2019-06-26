@@ -532,7 +532,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		algorithms.add(ensemble);
 
 		WithDBSCAN denstream = new WithDBSCAN();
-		// algorithm.epsilonOption.setValue(.1);
 		algorithms.add(denstream);
 
 		ClusTree clustree = new ClusTree();
@@ -544,11 +543,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		BICO bico = new BICO();
 		algorithms.add(bico);
 
-		// Dstream dstream = new Dstream(); ## only macro
-		// algorithms.add(dstream);
+		Dstream dstream = new Dstream(); // only macro
+		algorithms.add(dstream);
 
-		// StreamKM streamkm = new StreamKM(); ## only macro
-		// algorithms.add(streamkm);
+		StreamKM streamkm = new StreamKM(); // only macro
+		algorithms.add(streamkm);
 
 		for (int s = 0; s < streams.size(); s++) {
 			System.out.println("Stream: " + names[s]);
