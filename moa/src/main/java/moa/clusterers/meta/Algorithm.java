@@ -23,6 +23,8 @@ public class Algorithm {
 	public Attribute[] attributes;
 	public double prediction;
 	public double silhouette;
+	public boolean preventRemoval;
+	public boolean isDefault;
 
 	// copy constructor
 	public Algorithm(Algorithm x, boolean keepCurrentModel, int verbose) {
@@ -31,6 +33,9 @@ public class Algorithm {
 		this.algorithm = x.algorithm;
 		this.attributes = x.attributes; // this is a reference since we dont manipulate the attributes
 		this.parameters = new IParameter[x.parameters.length];
+		this.preventRemoval = x.preventRemoval;
+		this.isDefault = false;
+
 		for (int i = 0; i < x.parameters.length; i++) {
 			this.parameters[i] = x.parameters[i].copy();
 		}
@@ -52,6 +57,8 @@ public class Algorithm {
 
 		this.algorithm = x.algorithm;
 		this.parameters = new IParameter[x.parameters.length];
+		this.preventRemoval = false;
+		this.isDefault = true;
 
 		this.attributes = new Attribute[x.parameters.length];
 		for (int i = 0; i < x.parameters.length; i++) {

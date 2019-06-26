@@ -9,8 +9,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.github.javacliparser.ClassOption;
 import com.github.javacliparser.FileOption;
@@ -74,6 +73,9 @@ class GeneralConfiguration {
 	public boolean preventAlgorithmDeath;
 	public boolean reinitialiseWithMicro;
 	public boolean evaluateMacro;
+	public boolean keepGlobalIncumbent;
+	public boolean keepAlgorithmIncumbents;
+	public boolean keepDefaultConfigurations;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -89,7 +91,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
-	int verbose = 0;
+	int verbose = 1;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -188,8 +190,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	protected void evaluatePerformance() {
 
-		double maxVal = Double.NEGATIVE_INFINITY;
+		HashMap<String, Double> bestPerformanceValMap = new HashMap<String, Double>();
+		HashMap<String, Integer> bestPerformanceIdxMap = new HashMap<String, Integer>();
+		HashMap<String, Integer> algorithmCount = new HashMap<String, Integer>();
 		for (int i = 0; i < this.ensemble.size(); i++) {
+
+			this.ensemble.get(i).preventRemoval = false; // reset
 
 			// compare micro-clusters
 			Clustering result = null;
@@ -241,11 +247,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ "\t => \t Silhouette: " + performance);
 			}
 
-			// find best clustering result among all algorithms
-			if (performance > maxVal) {
-				maxVal = performance;
-				this.bestModel = i; // the clusterer with the best result becomes the active one
+
+			String algorithm = this.ensemble.get(i).algorithm;
+			if(!bestPerformanceIdxMap.containsKey(algorithm) || performance > bestPerformanceValMap.get(algorithm)){
+				bestPerformanceValMap.put(algorithm, performance); // best silhouette per algorithm
+				bestPerformanceIdxMap.put(algorithm, i); // index of best silhouette per algorithm
+				algorithmCount.put(algorithm, algorithmCount.getOrDefault(algorithm, 0) + 1); // number of instances per algorithm in ensemble
+				// algorithmCount.computeIfPresent(algorithm, (k, v) -> v + 1);
 			}
+
 
 			double[] params = this.ensemble.get(i).getParamVector(1);
 
@@ -260,6 +270,38 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// train adaptive random forest regressor based on performance of model
 			this.ARFregs.get(this.ensemble.get(i).algorithm).trainOnInstanceImpl(inst);
 		}
+
+
+		updateRemovalFlags(bestPerformanceValMap, bestPerformanceIdxMap, algorithmCount);
+	}
+
+
+	protected void updateRemovalFlags(HashMap<String, Double> bestPerformanceValMap, HashMap<String, Integer> bestPerformanceIdxMap, HashMap<String, Integer> algorithmCount){
+		// only keep best overall algorithm
+		if(this.settings.keepGlobalIncumbent){
+			Map.Entry<String, Double> maxEntry = null;
+			for (Map.Entry<String, Double> entry : bestPerformanceValMap.entrySet()){
+				if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0){
+					maxEntry = entry;
+				}
+			}
+			int idx = bestPerformanceIdxMap.get(maxEntry.getKey());
+			this.ensemble.get(idx).preventRemoval = true;
+		} 
+		// keep best instance per algorithm
+		if(this.settings.keepAlgorithmIncumbents){
+			for (int idx : bestPerformanceIdxMap.values()){
+				this.ensemble.get(idx).preventRemoval = true;
+			}
+		}
+		// keep all default configurations
+		if(this.settings.keepDefaultConfigurations){
+			for(int i=0; i < this.ensemble.size(); i++){
+				if(this.ensemble.get(i).isDefault){
+					this.ensemble.get(i).preventRemoval = true;
+				}
+			}
+		}
 	}
 
 	// predict performance of new configuration
@@ -267,9 +309,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		// get performance values
 		ArrayList<Double> silhs = this.silhouette.getAllValues(0);
-
-		ArrayList<Integer> removeIgnore = new ArrayList<Integer>();
-		removeIgnore.add(this.bestModel); // ignore incumbent
 
 		for (int z = 0; z < this.settings.newConfigurations; z++) {
 
@@ -362,33 +401,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		// replace solutions that cannot get worse first
 		if (worst <= -1.0) {
-			for (int i = 0; i < silhs.size(); i++) {
-				if (silhs.get(i) <= -1.0) {
+			for (int i = 0; i < this.ensemble.size(); i++) {
+				if (silhs.get(i) <= -1.0 && !this.ensemble.get(i).preventRemoval) {
 					replace.put(i, silhs.get(i));
 				}
 			}
 		} else {
-			// allow replacement of all but the incumbent
-			for (int i = 0; i < silhs.size(); i++) {
-				if (i != this.bestModel) {
+			for (int i = 0; i < this.ensemble.size(); i++) {
+				if (!this.ensemble.get(i).preventRemoval) {
 					replace.put(i, silhs.get(i));
-				}
-			}
-		}
-
-		if (this.settings.preventAlgorithmDeath) {
-			// dont remove algorithms with only a single configuration in the ensemble
-			LinkedHashMap<String, Integer> count = new LinkedHashMap<String, Integer>();
-			// count num occurences
-			for (int i = 0; i < ensemble.size(); i++) {
-				count.merge(this.ensemble.get(i).algorithm, 1, Integer::sum);
-			}
-			// dont replace single occurences unless they are the parent
-			Iterator<Integer> it = replace.keySet().iterator();
-			while(it.hasNext()) {
-				Integer x = it.next();
-				if (count.get(this.ensemble.get(x).algorithm) == 1 && parentIdx != x) {
-					it.remove();
 				}
 			}
 		}
@@ -595,6 +616,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				PrintWriter ensembleWriter = null;
 				PrintWriter individualPredictionWriter = null;
 				PrintWriter predictionWriter = null;
+
 				double predictionError = 0.0;
 				double predictionSum = 0.0;
 				double silhouetteSum = 0.0;
@@ -753,7 +775,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							predictionWriter.printf("\t%f", predictionSum / confStream.ensemble.size());
 							predictionWriter.printf("\t%f", predictionError / confStream.ensemble.size());
 							predictionWriter.print("\n");
-
 						}
 
 						// // then train
@@ -762,7 +783,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						// }
 
 						// windowInstances.clear();
-
 						windowPoints.clear();
 						resultWriter.flush();
 						individualPredictionWriter.flush();

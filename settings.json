@@ -6,6 +6,9 @@
 	"reinitialiseWithMicro" : "true",
 	"preventAlgorithmDeath": "true",
 	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true",
+	"keepAlgorithmIncumbents": "true",
+	"keepDefaultConfigurations": "true",
 	"lambda": 0.05,
 	"algorithms": [
 		{
@@ -14,8 +17,8 @@
 				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]},
 				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
 				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
-				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]},
-				{"parameter": "l", "type":"numeric", "value":1, "range":[0,1]}
+				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]}
+				// {"parameter": "l", "type":"numeric", "value":1, "range":[0,1]}
 				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]},
 				// {"parameter": "c", "type":"categorical", "value":"female", "range":["female","male"]},
 				// {"parameter": "b", "type":"boolean", "value":"true"}
@@ -26,7 +29,7 @@
 			"algorithm": "clustree.ClusTree",
 			"parameters": [
 				{"parameter": "H", "type":"integer", "value":8, "range":[1,20]},
-				{"parameter": "B", "type":"boolean", "value":"true"}
+				{"parameter": "B", "type":"boolean", "value":"false"}
 			]
 		}
 		,
