@@ -245,15 +245,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						+ "\t => \t Silhouette: " + performance);
 			}
 
-
 			String algorithm = this.ensemble.get(i).algorithm;
-			if(!bestPerformanceIdxMap.containsKey(algorithm) || performance > bestPerformanceValMap.get(algorithm)){
+			if (!bestPerformanceIdxMap.containsKey(algorithm) || performance > bestPerformanceValMap.get(algorithm)) {
 				bestPerformanceValMap.put(algorithm, performance); // best silhouette per algorithm
 				bestPerformanceIdxMap.put(algorithm, i); // index of best silhouette per algorithm
-				algorithmCount.put(algorithm, algorithmCount.getOrDefault(algorithm, 0) + 1); // number of instances per algorithm in ensemble
+				algorithmCount.put(algorithm, algorithmCount.getOrDefault(algorithm, 0) + 1); // number of instances per
+																								// algorithm in ensemble
 				// algorithmCount.computeIfPresent(algorithm, (k, v) -> v + 1);
 			}
-
 
 			double[] params = this.ensemble.get(i).getParamVector(1);
 
@@ -269,33 +268,32 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			this.ARFregs.get(this.ensemble.get(i).algorithm).trainOnInstanceImpl(inst);
 		}
 
-
 		updateRemovalFlags(bestPerformanceValMap, bestPerformanceIdxMap, algorithmCount);
 	}
 
-
-	protected void updateRemovalFlags(HashMap<String, Double> bestPerformanceValMap, HashMap<String, Integer> bestPerformanceIdxMap, HashMap<String, Integer> algorithmCount){
+	protected void updateRemovalFlags(HashMap<String, Double> bestPerformanceValMap,
+			HashMap<String, Integer> bestPerformanceIdxMap, HashMap<String, Integer> algorithmCount) {
 		// only keep best overall algorithm
-		if(this.settings.keepGlobalIncumbent){
+		if (this.settings.keepGlobalIncumbent) {
 			Map.Entry<String, Double> maxEntry = null;
-			for (Map.Entry<String, Double> entry : bestPerformanceValMap.entrySet()){
-				if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0){
+			for (Map.Entry<String, Double> entry : bestPerformanceValMap.entrySet()) {
+				if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
 					maxEntry = entry;
 				}
 			}
 			int idx = bestPerformanceIdxMap.get(maxEntry.getKey());
 			this.ensemble.get(idx).preventRemoval = true;
-		} 
+		}
 		// keep best instance per algorithm
-		if(this.settings.keepAlgorithmIncumbents){
-			for (int idx : bestPerformanceIdxMap.values()){
+		if (this.settings.keepAlgorithmIncumbents) {
+			for (int idx : bestPerformanceIdxMap.values()) {
 				this.ensemble.get(idx).preventRemoval = true;
 			}
 		}
 		// keep all default configurations
-		if(this.settings.keepDefaultConfigurations){
-			for(int i=0; i < this.ensemble.size(); i++){
-				if(this.ensemble.get(i).isDefault){
+		if (this.settings.keepDefaultConfigurations) {
+			for (int i = 0; i < this.ensemble.size(); i++) {
+				if (this.ensemble.get(i).isDefault) {
 					this.ensemble.get(i).preventRemoval = true;
 				}
 			}
@@ -537,11 +535,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/powersupply_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "",
+				"/home/matthias/Downloads/powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/covertype_relevant_standardized.csv.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "",
+				"/home/matthias/Downloads/covertype_relevant_standardized.csv.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
@@ -549,7 +549,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		int[] dimensions = { 2, 4, 2, 10 };
 		int windowSize = 1000;
-
 
 		for (int s = 0; s < streams.size(); s++) {
 
@@ -569,7 +568,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			algorithms.add(clustream);
 
 			BICO bico = new BICO();
-			bico.numDimensionsOption.setValue(dimensions[s]);;
+			bico.numDimensionsOption.setValue(dimensions[s]);
+			;
 			algorithms.add(bico);
 
 			Dstream dstream = new Dstream(); // only macro
@@ -597,34 +597,34 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			algorithms.add(confstreamBico);
 
 			// run algorithms with already optimised parameters
-			WithDBSCAN denstreamOptim = new WithDBSCAN();
-			WithKmeans clustreamOptim = new WithKmeans();
-			ClusTree clustreeOptim = new ClusTree();
-			Dstream dstreamOptim = new Dstream(); // only macro
-			if(names[s].equals("sensor")){
-				denstreamOptim.epsilonOption.setValue(0.02);
-				denstreamOptim.muOption.setValue(2.78);
-				denstreamOptim.betaOption.setValue(0.69);
-				clustreamOptim.kernelRadiFactorOption.setValue(7);
-				clustreeOptim.maxHeightOption.setValue(9);
-				dstreamOptim.cmOption.setValue(1.38);
-				dstreamOptim.clOption.setValue(1.25);
-			} else if(names[s].equals("covertype")){
-				denstreamOptim.epsilonOption.setValue(0.42);
-				denstreamOptim.muOption.setValue(2.51);
-				denstreamOptim.betaOption.setValue(0.33);	
-				clustreamOptim.kernelRadiFactorOption.setValue(3);
-				clustreeOptim.maxHeightOption.setValue(6);
-				dstreamOptim.cmOption.setValue(1.65);
-				dstream.clOption.setValue(0.34);
+			if (names[s].equals("sensor") || names[s].equals("covertype")) {
+				WithDBSCAN denstreamOptim = new WithDBSCAN();
+				WithKmeans clustreamOptim = new WithKmeans();
+				ClusTree clustreeOptim = new ClusTree();
+				Dstream dstreamOptim = new Dstream(); // only macro
+				if (names[s].equals("sensor")) {
+					denstreamOptim.epsilonOption.setValue(0.02);
+					denstreamOptim.muOption.setValue(2.78);
+					denstreamOptim.betaOption.setValue(0.69);
+					clustreamOptim.kernelRadiFactorOption.setValue(7);
+					clustreeOptim.maxHeightOption.setValue(9);
+					dstreamOptim.cmOption.setValue(1.38);
+					dstreamOptim.clOption.setValue(1.25);
+				} else if (names[s].equals("covertype")) {
+					denstreamOptim.epsilonOption.setValue(0.42);
+					denstreamOptim.muOption.setValue(2.51);
+					denstreamOptim.betaOption.setValue(0.33);
+					clustreamOptim.kernelRadiFactorOption.setValue(3);
+					clustreeOptim.maxHeightOption.setValue(6);
+					dstreamOptim.cmOption.setValue(1.65);
+					dstream.clOption.setValue(0.34);
+				}
+				algorithms.add(denstreamOptim);
+				algorithms.add(clustreamOptim);
+				algorithms.add(clustreeOptim);
+				algorithms.add(dstreamOptim);
 			}
-			algorithms.add(denstreamOptim);
-			algorithms.add(clustreamOptim);
-			algorithms.add(clustreeOptim);
-			algorithms.add(dstreamOptim);
 
-
-			
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();
 			streams.get(s).restart();
@@ -669,7 +669,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 
 					// init prediction for ensemble algorithms writer
-					File ensembleFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_ensemble.txt");
+					File ensembleFile = new File(
+							names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_ensemble.txt");
 					ensembleWriter = new PrintWriter(ensembleFile);
 
 					ensembleWriter.println("points\tidx\tAlgorithm");
@@ -682,12 +683,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					ensembleWriter.flush();
 
 					// init writer for individual prediction comparison
-					File individualPredictionFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_individualPrediction.txt");
+					File individualPredictionFile = new File(names[s] + "_"
+							+ algorithms.get(a).getCLICreationString(Clusterer.class) + "_individualPrediction.txt");
 					individualPredictionWriter = new PrintWriter(individualPredictionFile);
 					individualPredictionWriter.println("points\tidx\talgorithm\tsilhouette\tprediction\terror");
 
 					// init writer for individual prediction comparison
-					File predictionFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class)	+ "_prediction.txt");
+					File predictionFile = new File(names[s] + "_"
+							+ algorithms.get(a).getCLICreationString(Clusterer.class) + "_prediction.txt");
 					predictionWriter = new PrintWriter(predictionFile);
 					predictionWriter.println("points\tAvgSilhouette\tavgPrediction\tMSE");
 				}
@@ -746,7 +749,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 							Algorithm alg = confStream.ensemble.get(confStream.bestModel);
 
-							File paramFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_" + alg.algorithm + ".txt");
+							File paramFile = new File(
+									names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_"
+											+ alg.algorithm + ".txt");
 
 							PrintWriter paramWriter = new PrintWriter(new FileOutputStream(paramFile, true)); // append
 							BufferedReader br = new BufferedReader(new FileReader(paramFile));
@@ -780,21 +785,25 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							}
 							ensembleWriter.flush();
 
-
 							double predictionError = 0.0;
 							double predictionSum = 0.0;
 							double silhouetteSum = 0.0;
 							for (int i = 0; i < confStream.ensemble.size(); i++) {
 								individualPredictionWriter.print(d);
 								individualPredictionWriter.print("\t" + i);
-								individualPredictionWriter.print("\t" + confStream.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
+								individualPredictionWriter.print("\t"
+										+ confStream.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
 								individualPredictionWriter.printf("\t%f", confStream.ensemble.get(i).silhouette);
-								individualPredictionWriter.printf("\t%f", + confStream.ensemble.get(i).prediction);
-								individualPredictionWriter.printf("\t%f", + Math.pow(confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction, 2));
+								individualPredictionWriter.printf("\t%f", +confStream.ensemble.get(i).prediction);
+								individualPredictionWriter.printf("\t%f", +Math.pow(
+										confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction,
+										2));
 								individualPredictionWriter.print("\n");
 								silhouetteSum += confStream.ensemble.get(i).silhouette;
 								predictionSum += confStream.ensemble.get(i).prediction;
-								predictionError += Math.pow(confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction, 2);
+								predictionError += Math.pow(
+										confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction,
+										2);
 							}
 							predictionWriter.print(d);
 							predictionWriter.printf("\t%f", silhouetteSum / confStream.ensemble.size());

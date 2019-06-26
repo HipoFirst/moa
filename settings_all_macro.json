@@ -1,0 +1,72 @@
+{
+	"windowSize": 1000,
+	"ensembleSize": 30,
+	"newConfigurations": 10,
+	"keepCurrentModel": "true",
+	"reinitialiseWithMicro" : "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "true",
+	"keepGlobalIncumbent": "true",
+	"keepAlgorithmIncumbents": "true",
+	"keepDefaultConfigurations": "true",
+	"lambda": 0.05,
+	"algorithms": [
+		{
+			"algorithm": "denstream.WithDBSCAN",
+			"parameters": [
+				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]},
+				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
+				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
+				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]}
+				// {"parameter": "l", "type":"numeric", "value":1, "range":[0,1]}
+				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]},
+				// {"parameter": "c", "type":"categorical", "value":"female", "range":["female","male"]},
+				// {"parameter": "b", "type":"boolean", "value":"true"}
+			]
+		}
+		,
+		{
+			"algorithm": "clustree.ClusTree",
+			"parameters": [
+				{"parameter": "H", "type":"integer", "value":8, "range":[1,20]},
+				{"parameter": "B", "type":"boolean", "value":"false"}
+			]
+		}
+		,
+		{
+			"algorithm": "clustream.WithKmeans",
+			"parameters": [
+				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+				{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
+				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
+			]
+		}
+		,
+		{
+			"algorithm": "kmeanspm.BICO",
+			"parameters": [
+				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+				{"parameter": "n", "type":"integer", "value":1000, "range":[1,2000]},
+				{"parameter": "p", "type":"integer", "value":10, "range":[1,20]},
+				{"parameter": "d", "type":"integer", "value":100, "fixed":"true"}
+			]
+		}
+		,
+		{
+			"algorithm": "dstream.Dstream",
+			"parameters": [
+				{"parameter": "m", "type":"numeric", "value":3, "range":[1.001,10000]},
+				{"parameter": "l", "type":"numeric", "value":0.8, "range":[0.001, 0.999]}
+			]
+		}
+		,
+		{
+			"algorithm": "streamkm.StreamKM",
+			"parameters": [
+				{"parameter": "s", "type":"integer", "value":10000, "range":[10,100000]},
+				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+				{"parameter": "l", "type":"integer", "value":10000, "fixed":"true"}
+			]
+		}
+	]
+}
