@@ -1,6 +1,6 @@
 {
 	"windowSize": 1000,
-	"ensembleSize": 25,
+	"ensembleSize": 30,
 	"newConfigurations": 10,
 	"keepCurrentModel": "true",
 	"reinitialiseWithMicro" : "true",

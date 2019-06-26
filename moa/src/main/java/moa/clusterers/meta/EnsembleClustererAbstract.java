@@ -195,8 +195,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		HashMap<String, Integer> algorithmCount = new HashMap<String, Integer>();
 		for (int i = 0; i < this.ensemble.size(); i++) {
 
-			this.ensemble.get(i).preventRemoval = false; // reset
-
 			// compare micro-clusters
 			Clustering result = null;
 			if (!this.settings.evaluateMacro) {
@@ -402,12 +400,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// replace solutions that cannot get worse first
 		if (worst <= -1.0) {
 			for (int i = 0; i < this.ensemble.size(); i++) {
+				this.ensemble.get(i).preventRemoval = false;
 				if (silhs.get(i) <= -1.0 && !this.ensemble.get(i).preventRemoval) {
 					replace.put(i, silhs.get(i));
 				}
 			}
 		} else {
 			for (int i = 0; i < this.ensemble.size(); i++) {
+				this.ensemble.get(i).preventRemoval = false;
 				if (!this.ensemble.get(i).preventRemoval) {
 					replace.put(i, silhs.get(i));
 				}
@@ -632,21 +632,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 								+ "_ensemble.txt");
 					ensembleWriter = new PrintWriter(ensembleFile);
 
-					ensembleWriter.print("points");
-					for (int i = 0; i < confStream.settings.ensembleSize; i++) {
-						ensembleWriter.print("\t" + "Algorithm_" + i);
-					}
-					ensembleWriter.println();
+					ensembleWriter.println("points\tidx\tAlgorithm");
 
-					ensembleWriter.print(0);
-					for (int i = 0; i < confStream.settings.ensembleSize; i++) {
-						if(i >= confStream.ensemble.size()){
-							ensembleWriter.print("\t" + "Empty");
-						} else{
-							ensembleWriter.print("\t" + confStream.ensemble.get(i).algorithm);
-						}
+					for (int i = 0; i < confStream.ensemble.size(); i++) {
+						ensembleWriter.print(0);
+						ensembleWriter.print("\t" + i);
+						ensembleWriter.println("\t" + confStream.ensemble.get(i).algorithm);
 					}
-					ensembleWriter.print("\n");
 					ensembleWriter.flush();
 
 					// init writer for individual prediction comparison
@@ -747,15 +739,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							paramWriter.close();
 
 							// ensemble compositions
-							ensembleWriter.print(d);
-							for (int i = 0; i < confStream.settings.ensembleSize; i++) {
-								if(i >= confStream.ensemble.size()){
-									ensembleWriter.print("\t" + "Empty");
-								} else{
-									ensembleWriter.print("\t" + confStream.ensemble.get(i).algorithm);
-								}
+							for (int i = 0; i < confStream.ensemble.size(); i++) {
+								ensembleWriter.print(d);
+								ensembleWriter.print("\t" + i);
+								ensembleWriter.println("\t" + confStream.ensemble.get(i).algorithm);
 							}
-							ensembleWriter.print("\n");
 							ensembleWriter.flush();
 
 							for (int i = 0; i < confStream.ensemble.size(); i++) {
