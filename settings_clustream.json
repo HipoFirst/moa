@@ -1,0 +1,23 @@
+{
+	"windowSize": 1000,
+	"ensembleSize": 30,
+	"newConfigurations": 10,
+	"keepCurrentModel": "true",
+	"reinitialiseWithMicro" : "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true",
+	"keepAlgorithmIncumbents": "true",
+	"keepDefaultConfigurations": "true",
+	"lambda": 0.05,
+	"algorithms": [
+		{
+			"algorithm": "clustream.WithKmeans",
+			"parameters": [
+				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+				{"parameter": "m", "type":"integer", "value":100, "range":[1,10000]},
+				{"parameter": "t", "type":"integer", "value":2, "range":[1,10]}
+			]
+		}
+	]
+}

@@ -1,0 +1,22 @@
+{
+	"windowSize": 1000,
+	"ensembleSize": 30,
+	"newConfigurations": 10,
+	"keepCurrentModel": "true",
+	"reinitialiseWithMicro" : "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true",
+	"keepAlgorithmIncumbents": "true",
+	"keepDefaultConfigurations": "true",
+	"lambda": 0.05,
+	"algorithms": [
+		{
+			"algorithm": "clustree.ClusTree",
+			"parameters": [
+				{"parameter": "H", "type":"integer", "value":8, "range":[1,20]},
+				{"parameter": "B", "type":"boolean", "value":"false"}
+			]
+		}
+	]
+}

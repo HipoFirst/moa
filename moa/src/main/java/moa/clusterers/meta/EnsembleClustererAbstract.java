@@ -91,7 +91,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	HashMap<String, AdaptiveRandomForestRegressor> ARFregs = new HashMap<String, AdaptiveRandomForestRegressor>();
 	GeneralConfiguration settings;
 	SilhouetteCoefficient silhouette;
-	int verbose = 1;
+	int verbose = 0;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -550,29 +550,81 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		int[] dimensions = { 2, 4, 2, 10 };
 		int windowSize = 1000;
 
-		ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
-		ConfStream ensemble = new ConfStream();
-		algorithms.add(ensemble);
-
-		WithDBSCAN denstream = new WithDBSCAN();
-		algorithms.add(denstream);
-
-		ClusTree clustree = new ClusTree();
-		algorithms.add(clustree);
-
-		WithKmeans clustream = new WithKmeans();
-		algorithms.add(clustream);
-
-		BICO bico = new BICO();
-		algorithms.add(bico);
-
-		Dstream dstream = new Dstream(); // only macro
-		algorithms.add(dstream);
-
-		StreamKM streamkm = new StreamKM(); // only macro
-		algorithms.add(streamkm);
 
 		for (int s = 0; s < streams.size(); s++) {
+
+			ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
+			// run confstream algorithm
+			ConfStream confstream = new ConfStream();
+			algorithms.add(confstream);
+
+			// compare to individual algorithms
+			WithDBSCAN denstream = new WithDBSCAN();
+			algorithms.add(denstream);
+
+			ClusTree clustree = new ClusTree();
+			algorithms.add(clustree);
+
+			WithKmeans clustream = new WithKmeans();
+			algorithms.add(clustream);
+
+			BICO bico = new BICO();
+			bico.numDimensionsOption.setValue(dimensions[s]);;
+			algorithms.add(bico);
+
+			Dstream dstream = new Dstream(); // only macro
+			algorithms.add(dstream);
+
+			StreamKM streamkm = new StreamKM(); // only macro
+			streamkm.lengthOption.setValue(lengths[s]);
+			algorithms.add(streamkm);
+
+			// run confstream only on single algorithms
+			ConfStream confstreamDenstream = new ConfStream();
+			confstreamDenstream.fileOption.setValue("settings_denstream.json");
+			algorithms.add(confstreamDenstream);
+
+			ConfStream confstreamClustree = new ConfStream();
+			confstreamClustree.fileOption.setValue("settings_clustree.json");
+			algorithms.add(confstreamClustree);
+
+			ConfStream confstreamClustream = new ConfStream();
+			confstreamClustream.fileOption.setValue("settings_clustream.json");
+			algorithms.add(confstreamClustream);
+
+			ConfStream confstreamBico = new ConfStream();
+			confstreamBico.fileOption.setValue("settings_bico.json");
+			algorithms.add(confstreamBico);
+
+			// run algorithms with already optimised parameters
+			WithDBSCAN denstreamOptim = new WithDBSCAN();
+			WithKmeans clustreamOptim = new WithKmeans();
+			ClusTree clustreeOptim = new ClusTree();
+			Dstream dstreamOptim = new Dstream(); // only macro
+			if(names[s].equals("sensor")){
+				denstreamOptim.epsilonOption.setValue(0.02);
+				denstreamOptim.muOption.setValue(2.78);
+				denstreamOptim.betaOption.setValue(0.69);
+				clustreamOptim.kernelRadiFactorOption.setValue(7);
+				clustreeOptim.maxHeightOption.setValue(9);
+				dstreamOptim.cmOption.setValue(1.38);
+				dstreamOptim.clOption.setValue(1.25);
+			} else if(names[s].equals("covertype")){
+				denstreamOptim.epsilonOption.setValue(0.42);
+				denstreamOptim.muOption.setValue(2.51);
+				denstreamOptim.betaOption.setValue(0.33);	
+				clustreamOptim.kernelRadiFactorOption.setValue(3);
+				clustreeOptim.maxHeightOption.setValue(6);
+				dstreamOptim.cmOption.setValue(1.65);
+				dstream.clOption.setValue(0.34);
+			}
+			algorithms.add(denstreamOptim);
+			algorithms.add(clustreamOptim);
+			algorithms.add(clustreeOptim);
+			algorithms.add(dstreamOptim);
+
+
+			
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();
 			streams.get(s).restart();
@@ -584,12 +636,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				algorithms.get(a).prepareForUse();
 
 				// TODO these are super ugly special cases
-				if (algorithms.get(a) instanceof StreamKM) {
-					algorithms.get(a).getOptions().getOption('l').setValueViaCLIString("" + lengths[s]);
-				}
-				if (algorithms.get(a) instanceof BICO) {
-					algorithms.get(a).getOptions().getOption('d').setValueViaCLIString("" + dimensions[s]);
-				}
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 					for (Algorithm alg : confStream.ensemble) {
@@ -617,19 +663,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				PrintWriter individualPredictionWriter = null;
 				PrintWriter predictionWriter = null;
 
-				double predictionError = 0.0;
-				double predictionSum = 0.0;
-				double silhouetteSum = 0.0;
-
 				// header of proportion file
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 
 					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 
 					// init prediction for ensemble algorithms writer
-					File ensembleFile = new File(names[s] + "_" +
-						ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
-								+ "_ensemble.txt");
+					File ensembleFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_ensemble.txt");
 					ensembleWriter = new PrintWriter(ensembleFile);
 
 					ensembleWriter.println("points\tidx\tAlgorithm");
@@ -642,16 +682,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					ensembleWriter.flush();
 
 					// init writer for individual prediction comparison
-					File individualPredictionFile = new File(names[s] + "_" +
-					ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
-							+ "_individualPrediction.txt");
+					File individualPredictionFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_individualPrediction.txt");
 					individualPredictionWriter = new PrintWriter(individualPredictionFile);
 					individualPredictionWriter.println("points\tidx\talgorithm\tsilhouette\tprediction\terror");
 
 					// init writer for individual prediction comparison
-					File predictionFile = new File(names[s] + "_" +
-					ClassOption.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class)
-							+ "_prediction.txt");
+					File predictionFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class)	+ "_prediction.txt");
 					predictionWriter = new PrintWriter(predictionFile);
 					predictionWriter.println("points\tAvgSilhouette\tavgPrediction\tMSE");
 				}
@@ -710,9 +746,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
 							Algorithm alg = confStream.ensemble.get(confStream.bestModel);
 
-							File paramFile = new File(names[s] + "_" + ClassOption
-									.stripPackagePrefix(algorithms.get(a).getClass().getName(), Clusterer.class) + "_"
-									+ alg.algorithm + ".txt");
+							File paramFile = new File(names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_" + alg.algorithm + ".txt");
 
 							PrintWriter paramWriter = new PrintWriter(new FileOutputStream(paramFile, true)); // append
 							BufferedReader br = new BufferedReader(new FileReader(paramFile));
@@ -746,6 +780,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							}
 							ensembleWriter.flush();
 
+
+							double predictionError = 0.0;
+							double predictionSum = 0.0;
+							double silhouetteSum = 0.0;
 							for (int i = 0; i < confStream.ensemble.size(); i++) {
 								individualPredictionWriter.print(d);
 								individualPredictionWriter.print("\t" + i);
@@ -763,6 +801,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							predictionWriter.printf("\t%f", predictionSum / confStream.ensemble.size());
 							predictionWriter.printf("\t%f", predictionError / confStream.ensemble.size());
 							predictionWriter.print("\n");
+
+							individualPredictionWriter.flush();
+							predictionWriter.flush();
 						}
 
 						// // then train
@@ -773,8 +814,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						// windowInstances.clear();
 						windowPoints.clear();
 						resultWriter.flush();
-						individualPredictionWriter.flush();
-						predictionWriter.flush();
 					}
 
 					if (d % 10000 == 0) {
