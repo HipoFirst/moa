@@ -596,6 +596,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			confstreamBico.fileOption.setValue("settings_bico.json");
 			algorithms.add(confstreamBico);
 
+			// compare on-the-fly adaption to reinitialisation with micro to reset
+			ConfStream denStreamNoReinit = new ConfStream();
+			denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
+			algorithms.add(denStreamNoReinit);
+
+			ConfStream denStreamReinit = new ConfStream();
+			denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
+			algorithms.add(denStreamReinit);
+
 			// run algorithms with already optimised parameters
 			if (names[s].equals("sensor") || names[s].equals("covertype")) {
 				WithDBSCAN denstreamOptim = new WithDBSCAN();

@@ -1,0 +1,24 @@
+{
+	"windowSize": 1000,
+	"ensembleSize": 30,
+	"newConfigurations": 10,
+	"keepCurrentModel": "false",
+	"reinitialiseWithMicro" : "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true",
+	"keepAlgorithmIncumbents": "true",
+	"keepDefaultConfigurations": "true",
+	"lambda": 0.05,
+	"algorithms": [
+		{
+			"algorithm": "denstream.WithDBSCAN",
+			"parameters": [
+				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]},
+				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
+				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
+				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]}
+			]
+		}
+	]
+}
