@@ -7,6 +7,7 @@ import com.github.javacliparser.Options;
 import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.DenseInstance;
 import com.yahoo.labs.samoa.instances.Instance;
+import com.yahoo.labs.samoa.instances.Instances;
 
 import moa.cluster.Cluster;
 import moa.cluster.Clustering;
@@ -27,7 +28,7 @@ public class Algorithm {
 	public boolean isDefault;
 
 	// copy constructor
-	public Algorithm(Algorithm x, boolean keepCurrentModel, int verbose) {
+	public Algorithm(Algorithm x, double lambda, boolean keepCurrentModel, boolean reinitialiseWithMicro, int verbose) {
 
 		// make a (mostly) deep copy of the algorithm
 		this.algorithm = x.algorithm;
@@ -38,7 +39,9 @@ public class Algorithm {
 
 		for (int i = 0; i < x.parameters.length; i++) {
 			this.parameters[i] = x.parameters[i].copy();
+			this.parameters[i].sampleNewConfig(lambda, verbose);
 		}
+
 		if (keepCurrentModel) {
 			try{
 				this.clusterer = (AbstractClusterer) x.clusterer.copy();
@@ -46,10 +49,14 @@ public class Algorithm {
 				if(verbose >= 2){
 					System.out.println("Copy failed for " + x.clusterer.getCLICreationString(Clusterer.class) + "! Reinitialise instead.");		
 				} 
-				this.init();
+				this.clusterer = x.clusterer; // keep the old algorithm for now
+				keepCurrentModel = false;
 			}
+		} else{
+			this.clusterer = x.clusterer;  // keep the old algorithm for now
 		}
 
+		adjustAlgorithm(keepCurrentModel, reinitialiseWithMicro, verbose);
 	}
 
 	// init constructor
@@ -71,7 +78,7 @@ public class Algorithm {
 				IntegerParameter param = new IntegerParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter());
-			} else if (paramConfig.type.equals("nominal") || paramConfig.type.equals("categorical")) {
+			} else if (paramConfig.type.equals("nominal") || paramConfig.type.equals("categorical") || paramConfig.type.equals("factor")) {
 				CategoricalParameter param = new CategoricalParameter(paramConfig);
 				this.parameters[i] = param;
 				this.attributes[i] = new Attribute(param.getParameter(), Arrays.asList(param.getRange()));
@@ -88,7 +95,7 @@ public class Algorithm {
 						+ "'. Available options are 'numeric', 'integer', 'nominal', 'boolean' or 'ordinal'");
 			}
 		}
-		init();
+		init();			
 	}
 
 	// initialise a new algorithm using the Command Line Interface (CLI)
@@ -108,11 +115,7 @@ public class Algorithm {
 	}
 
 	// sample a new confguration based on the current one
-	public void sampleNewConfig(double lambda, boolean keepCurrentModel, boolean reinitialiseWithMicro, int verbose) {
-		// sample new configuration from the parent
-		for (IParameter param : this.parameters) {
-			param.sampleNewConfig(lambda, verbose);
-		}
+	public void adjustAlgorithm(boolean keepCurrentModel, boolean reinitialiseWithMicro, int verbose) {
 
 		if (keepCurrentModel) {
 			// Option 1: keep the old state and just change parameter
@@ -138,19 +141,18 @@ public class Algorithm {
 				if (verbose >= 2) {
 					System.out.println("Cannot change parameters of " + this.algorithm + " on the fly, reset instead.");
 				}
-				keepCurrentModel = false;
+				adjustAlgorithm(false, reinitialiseWithMicro, verbose);
 			}
-
-		}
-
-		if (!keepCurrentModel) {
+		} else{
 			// Option 2: reinitialise the entire state
-			Clustering result = this.clusterer.getMicroClusteringResult();
-			if(result==null){
-				result = this.clusterer.getClusteringResult();
+			AutoExpandVector<Cluster> clusters = null;
+			if (reinitialiseWithMicro) {
+				Clustering result = this.clusterer.getMicroClusteringResult();
+				if(result==null){
+					result = this.clusterer.getClusteringResult();
+				}
+				clusters = result.getClusteringCopy();
 			}
-
-			AutoExpandVector<Cluster> clusters = result.getClusteringCopy();
 
 			this.init();
 			if (verbose >= 2) {
@@ -165,6 +167,7 @@ public class Algorithm {
 				for (Cluster cluster : clusters) {
 					SphereCluster c = (SphereCluster) cluster; // TODO are there only SphereCluster?
 					Instance inst = new DenseInstance(c.getWeight(), c.getCenter());
+					inst.setDataset(new Instances(null, this.attributes, 0));
 					this.clusterer.trainOnInstance(inst);
 				}
 			}

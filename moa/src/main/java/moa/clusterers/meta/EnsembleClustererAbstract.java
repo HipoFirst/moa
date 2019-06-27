@@ -323,12 +323,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				System.out.println("Selected Configuration " + parentIdx + " as parent: "
 						+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 			}
-			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.keepCurrentModel,
-					this.verbose);
-
-			// sample new configuration from the parent
-			newAlgorithm.sampleNewConfig(this.settings.lambda, this.settings.keepCurrentModel,
-					this.settings.reinitialiseWithMicro, this.verbose);
+			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda, this.settings.keepCurrentModel, this.settings.reinitialiseWithMicro, this.verbose);
 
 			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
@@ -530,21 +525,22 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(rbf);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "/home/matthias/Downloads/sensor_relevant_standardized.csv",
+		file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv",
 				"", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
 		file.csvFileOption = new FileOption("", 'z', "",
-				"/home/matthias/Downloads/powersupply_relevant_standardized.csv", "", false);
+				"powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
 		file.csvFileOption = new FileOption("", 'z', "",
-				"/home/matthias/Downloads/covertype_relevant_standardized.csv.csv", "", false);
+				"covertype_relevant_standardized.csv", "", false);
 		streams.add(file);
 
-		int[] lengths = { 2000000, 2219803, 29928, 581012 };
+		// int[] lengths = { 2000000, 2219803, 29928, 581012 };
+		int[] lengths = { 10000, 10000, 10000, 10000 };
 		String[] names = { "RBF", "sensor", "powersupply", "covertype" };
 
 		int[] dimensions = { 2, 4, 2, 10 };
@@ -569,7 +565,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			BICO bico = new BICO();
 			bico.numDimensionsOption.setValue(dimensions[s]);
-			;
 			algorithms.add(bico);
 
 			Dstream dstream = new Dstream(); // only macro
@@ -610,28 +605,28 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				WithDBSCAN denstreamOptim = new WithDBSCAN();
 				WithKmeans clustreamOptim = new WithKmeans();
 				ClusTree clustreeOptim = new ClusTree();
-				Dstream dstreamOptim = new Dstream(); // only macro
+				// Dstream dstreamOptim = new Dstream(); // only macro
 				if (names[s].equals("sensor")) {
 					denstreamOptim.epsilonOption.setValue(0.02);
 					denstreamOptim.muOption.setValue(2.78);
 					denstreamOptim.betaOption.setValue(0.69);
 					clustreamOptim.kernelRadiFactorOption.setValue(7);
 					clustreeOptim.maxHeightOption.setValue(9);
-					dstreamOptim.cmOption.setValue(1.38);
-					dstreamOptim.clOption.setValue(1.25);
+					// dstreamOptim.cmOption.setValue(1.38);
+					// dstreamOptim.clOption.setValue(1.25);
 				} else if (names[s].equals("covertype")) {
 					denstreamOptim.epsilonOption.setValue(0.42);
 					denstreamOptim.muOption.setValue(2.51);
 					denstreamOptim.betaOption.setValue(0.33);
 					clustreamOptim.kernelRadiFactorOption.setValue(3);
 					clustreeOptim.maxHeightOption.setValue(6);
-					dstreamOptim.cmOption.setValue(1.65);
-					dstream.clOption.setValue(0.34);
+					// dstreamOptim.cmOption.setValue(1.65);
+					// dstreamOptim.clOption.setValue(0.34);
 				}
 				algorithms.add(denstreamOptim);
 				algorithms.add(clustreamOptim);
 				algorithms.add(clustreeOptim);
-				algorithms.add(dstreamOptim);
+				// algorithms.add(dstreamOptim);
 			}
 
 			System.out.println("Stream: " + names[s]);
