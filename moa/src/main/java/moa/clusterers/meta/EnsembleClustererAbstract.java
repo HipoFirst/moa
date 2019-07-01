@@ -537,8 +537,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				"covertype_relevant_standardized.csv", "", false);
 		streams.add(file);
 
-		// int[] lengths = { 2000000, 2219803, 29928, 581012 };
-		int[] lengths = { 10000, 10000, 10000, 10000 };
+		int[] lengths = { 2000000, 2219803, 29928, 581012 };
 		String[] names = { "RBF", "sensor", "powersupply", "covertype" };
 
 		int[] dimensions = { 2, 4, 2, 10 };
