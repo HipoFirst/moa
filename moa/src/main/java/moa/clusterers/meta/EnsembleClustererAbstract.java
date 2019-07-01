@@ -235,7 +235,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							this.silhouette.addValue(0, -1.0);
 						}
 					}
-					continue;
 				}
 			}
 			this.ensemble.get(i).silhouette = performance;
@@ -251,7 +250,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bestPerformanceIdxMap.put(algorithm, i); // index of best silhouette per algorithm
 				algorithmCount.put(algorithm, algorithmCount.getOrDefault(algorithm, 0) + 1); // number of instances per
 																								// algorithm in ensemble
-				// algorithmCount.computeIfPresent(algorithm, (k, v) -> v + 1);
 			}
 
 			double[] params = this.ensemble.get(i).getParamVector(1);
