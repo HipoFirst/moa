@@ -28,7 +28,7 @@ public class Algorithm {
 	public boolean isDefault;
 
 	// copy constructor
-	public Algorithm(Algorithm x, double lambda, boolean keepCurrentModel, boolean reinitialiseWithMicro, int verbose) {
+	public Algorithm(Algorithm x, double lambda, boolean keepCurrentModel, boolean reinitialiseWithClusters, int verbose) {
 
 		// make a (mostly) deep copy of the algorithm
 		this.algorithm = x.algorithm;
@@ -56,7 +56,7 @@ public class Algorithm {
 			this.clusterer = x.clusterer;  // keep the old algorithm for now
 		}
 
-		adjustAlgorithm(keepCurrentModel, reinitialiseWithMicro, verbose);
+		adjustAlgorithm(keepCurrentModel, reinitialiseWithClusters, verbose);
 	}
 
 	// init constructor
@@ -115,7 +115,7 @@ public class Algorithm {
 	}
 
 	// sample a new confguration based on the current one
-	public void adjustAlgorithm(boolean keepCurrentModel, boolean reinitialiseWithMicro, int verbose) {
+	public void adjustAlgorithm(boolean keepCurrentModel, boolean reinitialiseWithClusters, int verbose) {
 
 		if (keepCurrentModel) {
 			// Option 1: keep the old state and just change parameter
@@ -141,17 +141,21 @@ public class Algorithm {
 				if (verbose >= 2) {
 					System.out.println("Cannot change parameters of " + this.algorithm + " on the fly, reset instead.");
 				}
-				adjustAlgorithm(false, reinitialiseWithMicro, verbose);
+				adjustAlgorithm(false, reinitialiseWithClusters, verbose);
 			}
 		} else{
 			// Option 2: reinitialise the entire state
 			AutoExpandVector<Cluster> clusters = null;
-			if (reinitialiseWithMicro) {
+			if (reinitialiseWithClusters) {
 				Clustering result = this.clusterer.getMicroClusteringResult();
 				if(result==null){
 					result = this.clusterer.getClusteringResult();
 				}
-				clusters = result.getClusteringCopy();
+				if(result == null){
+					reinitialiseWithClusters = false;
+				} else{
+					clusters = result.getClusteringCopy();
+				}
 			}
 
 			this.init();
@@ -159,7 +163,7 @@ public class Algorithm {
 				System.out.println("Initialise: " + this.clusterer.getCLICreationString(Clusterer.class));
 			}
 
-			if (reinitialiseWithMicro) {
+			if (reinitialiseWithClusters) {
 				if (verbose >= 2) {
 					System.out.println("Train with existing micro clusters.");
 				}

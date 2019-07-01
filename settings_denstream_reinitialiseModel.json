@@ -3,7 +3,7 @@
 	"ensembleSize": 30,
 	"newConfigurations": 10,
 	"keepCurrentModel": "false",
-	"reinitialiseWithMicro" : "true",
+	"reinitialiseWithClusters" : "true",
 	"preventAlgorithmDeath": "true",
 	"evaluateMacro": "false",
 	"keepGlobalIncumbent": "true",

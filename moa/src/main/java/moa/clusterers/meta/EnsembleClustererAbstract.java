@@ -71,7 +71,7 @@ class GeneralConfiguration {
 	public boolean keepCurrentModel;
 	public double lambda;
 	public boolean preventAlgorithmDeath;
-	public boolean reinitialiseWithMicro;
+	public boolean reinitialiseWithClusters;
 	public boolean evaluateMacro;
 	public boolean keepGlobalIncumbent;
 	public boolean keepAlgorithmIncumbents;
@@ -321,7 +321,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				System.out.println("Selected Configuration " + parentIdx + " as parent: "
 						+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 			}
-			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda, this.settings.keepCurrentModel, this.settings.reinitialiseWithMicro, this.verbose);
+			Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda, this.settings.keepCurrentModel, this.settings.reinitialiseWithClusters, this.verbose);
 
 			// create a data point from new configuration
 			double[] params = newAlgorithm.getParamVector(0);
