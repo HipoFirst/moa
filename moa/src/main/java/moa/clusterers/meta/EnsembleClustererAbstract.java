@@ -290,12 +290,21 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		}
 		// keep all default configurations
 		if (this.settings.keepDefaultConfigurations) {
-			for (int i = 0; i < this.ensemble.size(); i++) {
-				if (this.ensemble.get(i).isDefault) {
-					this.ensemble.get(i).preventRemoval = true;
+			for (Algorithm algorithm : this.ensemble) {
+				if (algorithm.isDefault) {
+					algorithm.preventRemoval = true;
 				}
 			}
 		}
+		// keep at least one instance per algorithm
+		if(this.settings.preventAlgorithmDeath){
+			for (Algorithm algorithm : this.ensemble) {
+				if (algorithmCount.get(algorithm.algorithm) == 1) {
+					algorithm.preventRemoval = true;
+				}
+			}
+		}
+
 	}
 
 	// predict performance of new configuration
