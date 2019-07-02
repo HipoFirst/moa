@@ -177,7 +177,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		evaluatePerformance();
 
 		if (this.verbose >= 1) {
-			System.out.println("Clusterer " + this.bestModel + " is the active clusterer");
+			System.out.println("Clusterer " + this.bestModel + " is the active clusterer with silhouette: " + this.silhouette.getValue(0, this.bestModel));
 		}
 
 		// generate a new configuration and predict its performance using the random
@@ -373,7 +373,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				// update current silhouettes with the prediction
 				silhs.add(prediction);
 
-			} else if (prediction > worst) {
+			} else if (prediction > worst){ 
 				// if the predicted performance is better than the one we have in the ensemble
 
 				HashMap<Integer, Double> replace = getReplaceMap(worst, silhs, parentIdx);
@@ -673,7 +673,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				PrintWriter resultWriter = new PrintWriter(resultFile);
 
 				PrintWriter ensembleWriter = null;
-				PrintWriter individualPredictionWriter = null;
 				PrintWriter predictionWriter = null;
 
 				// header of proportion file
@@ -697,15 +696,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 					// init writer for individual prediction comparison
 					File individualPredictionFile = new File(names[s] + "_"
-							+ algorithms.get(a).getCLICreationString(Clusterer.class) + "_individualPrediction.txt");
-					individualPredictionWriter = new PrintWriter(individualPredictionFile);
-					individualPredictionWriter.println("points\tidx\talgorithm\tsilhouette\tprediction\terror");
-
-					// init writer for individual prediction comparison
-					File predictionFile = new File(names[s] + "_"
 							+ algorithms.get(a).getCLICreationString(Clusterer.class) + "_prediction.txt");
-					predictionWriter = new PrintWriter(predictionFile);
-					predictionWriter.println("points\tAvgSilhouette\tavgPrediction\tMSE");
+					predictionWriter = new PrintWriter(individualPredictionFile);
+					predictionWriter.println("points\tidx\talgorithm\tsilhouette\tprediction");
 				}
 
 				// header of result file
@@ -798,34 +791,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 							}
 							ensembleWriter.flush();
 
-							double predictionError = 0.0;
-							double predictionSum = 0.0;
-							double silhouetteSum = 0.0;
+
 							for (int i = 0; i < confStream.ensemble.size(); i++) {
-								individualPredictionWriter.print(d);
-								individualPredictionWriter.print("\t" + i);
-								individualPredictionWriter.print("\t"
+								predictionWriter.print(d);
+								predictionWriter.print("\t" + i);
+								predictionWriter.print("\t"
 										+ confStream.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
-								individualPredictionWriter.printf("\t%f", confStream.ensemble.get(i).silhouette);
-								individualPredictionWriter.printf("\t%f", +confStream.ensemble.get(i).prediction);
-								individualPredictionWriter.printf("\t%f", +Math.pow(
+								predictionWriter.printf("\t%f", confStream.ensemble.get(i).silhouette);
+								predictionWriter.printf("\t%f", +confStream.ensemble.get(i).prediction);
+								predictionWriter.printf("\t%f", +Math.pow(
 										confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction,
 										2));
-								individualPredictionWriter.print("\n");
-								silhouetteSum += confStream.ensemble.get(i).silhouette;
-								predictionSum += confStream.ensemble.get(i).prediction;
-								predictionError += Math.pow(
-										confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction,
-										2);
+								predictionWriter.print("\n");
 							}
-							predictionWriter.print(d);
-							predictionWriter.printf("\t%f", silhouetteSum / confStream.ensemble.size());
-							predictionWriter.printf("\t%f", predictionSum / confStream.ensemble.size());
-							predictionWriter.printf("\t%f", predictionError / confStream.ensemble.size());
-							predictionWriter.print("\n");
-
-							individualPredictionWriter.flush();
-							predictionWriter.flush();
 						}
 
 						// // then train
@@ -846,7 +824,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
 					ensembleWriter.close();
 					predictionWriter.close();
-					individualPredictionWriter.close();
 				}
 			}
 
