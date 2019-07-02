@@ -193,6 +193,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		HashMap<String, Double> bestPerformanceValMap = new HashMap<String, Double>();
 		HashMap<String, Integer> bestPerformanceIdxMap = new HashMap<String, Integer>();
 		HashMap<String, Integer> algorithmCount = new HashMap<String, Integer>();
+
+		double bestSilhouette = Double.NEGATIVE_INFINITY;
 		for (int i = 0; i < this.ensemble.size(); i++) {
 
 			// compare micro-clusters
@@ -238,6 +240,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				}
 			}
 			this.ensemble.get(i).silhouette = performance;
+			if(performance > bestSilhouette){
+				bestSilhouette = performance;
+				this.bestModel = i;
+			}
 
 			if (this.verbose >= 1) {
 				System.out.println(i + ") " + this.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class)
@@ -278,14 +284,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 		// only keep best overall algorithm
 		if (this.settings.keepGlobalIncumbent) {
-			Map.Entry<String, Double> maxEntry = null;
-			for (Map.Entry<String, Double> entry : bestPerformanceValMap.entrySet()) {
-				if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
-					maxEntry = entry;
-				}
-			}
-			int idx = bestPerformanceIdxMap.get(maxEntry.getKey());
-			this.ensemble.get(idx).preventRemoval = true;
+			this.ensemble.get(this.bestModel).preventRemoval = true;
 		}
 		// keep best instance per algorithm
 		if (this.settings.keepAlgorithmIncumbents) {
@@ -799,11 +798,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 										+ confStream.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
 								predictionWriter.printf("\t%f", confStream.ensemble.get(i).silhouette);
 								predictionWriter.printf("\t%f", +confStream.ensemble.get(i).prediction);
-								predictionWriter.printf("\t%f", +Math.pow(
-										confStream.ensemble.get(i).silhouette - confStream.ensemble.get(i).prediction,
-										2));
 								predictionWriter.print("\n");
 							}
+							predictionWriter.flush();
 						}
 
 						// // then train
