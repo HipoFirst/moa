@@ -264,6 +264,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// train adaptive random forest regressor based on performance of model
 			this.ARFregs.get(this.ensemble.get(i).algorithm).trainOnInstanceImpl(inst);
+
 		}
 
 		updateRemovalFlags(bestPerformanceValMap, bestPerformanceIdxMap, algorithmCount);
@@ -271,6 +272,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	protected void updateRemovalFlags(HashMap<String, Double> bestPerformanceValMap,
 			HashMap<String, Integer> bestPerformanceIdxMap, HashMap<String, Integer> algorithmCount) {
+		for(Algorithm algorithm : ensemble){
+			algorithm.preventRemoval = false;
+		}
+
 		// only keep best overall algorithm
 		if (this.settings.keepGlobalIncumbent) {
 			Map.Entry<String, Double> maxEntry = null;
@@ -326,7 +331,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				parents.put(i, silhs.get(i));
 			}
 			int parentIdx = EnsembleClustererAbstract.sampleProportionally(parents);
-			if (this.verbose == 2) {
+			if (this.verbose >= 2) {
 				System.out.println("Selected Configuration " + parentIdx + " as parent: "
 						+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 			}
@@ -400,14 +405,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// replace solutions that cannot get worse first
 		if (worst <= -1.0) {
 			for (int i = 0; i < this.ensemble.size(); i++) {
-				this.ensemble.get(i).preventRemoval = false;
 				if (silhs.get(i) <= -1.0 && !this.ensemble.get(i).preventRemoval) {
 					replace.put(i, silhs.get(i));
 				}
 			}
 		} else {
 			for (int i = 0; i < this.ensemble.size(); i++) {
-				this.ensemble.get(i).preventRemoval = false;
 				if (!this.ensemble.get(i).preventRemoval) {
 					replace.put(i, silhs.get(i));
 				}
