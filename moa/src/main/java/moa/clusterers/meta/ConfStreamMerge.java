@@ -20,14 +20,21 @@ public class ConfStreamMerge extends EnsembleClustererAbstract {
 	}
 
 	protected Clustering getEnsembleResult() {
-		ArrayList<Double> silhs = this.silhouette.getAllValues(0);
 
-		// normalize to 0-1 range, could also use DoubleVector.normalize()?
-		double min = this.silhouette.getMinValue(0);
-		double max = this.silhouette.getMaxValue(0);
+		double max = Double.NEGATIVE_INFINITY;
+		double min = Double.POSITIVE_INFINITY;
+		for(double value: this.silhouettes){
+			if(value > max){
+				max = value;
+			}
+			if(value < min){
+				min = value;
+			}
+		}
+
 		double range = max - min;
-		for (int i = 0; i < silhs.size(); i++) {
-			silhs.set(i, (silhs.get(i) - min) / (range));
+		for (int i = 0; i < this.silhouettes.size(); i++) {
+			this.silhouettes.set(i, (this.silhouettes.get(i) - min) / (range));
 		}
 
 		Clustering ensembleClustering = new Clustering(); // create empty clustering
@@ -43,7 +50,7 @@ public class ConfStreamMerge extends EnsembleClustererAbstract {
 			// and concatenate them to a single cluster
 			for (int j = 0; j < clusters.size(); j++) {
 				SphereCluster clstr = (SphereCluster) clusters.get(j); // TODO are there only SphereCluster?
-				clstr.setWeight(clstr.getWeight() * silhs.get(i));
+				clstr.setWeight(clstr.getWeight() * this.silhouettes.get(i));
 				ensembleClustering.add(clstr);
 			}
 		}
