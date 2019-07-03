@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import com.github.javacliparser.ClassOption;
 import com.github.javacliparser.FileOption;
