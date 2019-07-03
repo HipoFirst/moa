@@ -165,9 +165,9 @@ public class Algorithm {
 
 			if (reinitialiseWithClusters) {
 				if (verbose >= 2) {
-					System.out.println("Train with existing micro clusters.");
+					System.out.println("Train with existing clusters.");
 				}
-				// train the algorithm with the micro clusters
+				// train the algorithm with the clusters
 				for (Cluster cluster : clusters) {
 					SphereCluster c = (SphereCluster) cluster; // TODO are there only SphereCluster?
 					Instance inst = new DenseInstance(c.getWeight(), c.getCenter());

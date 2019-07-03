@@ -1,15 +1,15 @@
 {
-	"windowSize": 1000,
-	"ensembleSize": 30,
-	"newConfigurations": 10,
-	"keepCurrentModel": "true",
-	"reinitialiseWithClusters" : "true",
-	"preventAlgorithmDeath": "true",
-	"evaluateMacro": "false",
-	"keepGlobalIncumbent": "true",
-	"keepAlgorithmIncumbents": "true",
-	"keepDefaultConfigurations": "true",
-	"lambda": 0.05,
+	"windowSize": 1000, 							// size of the window
+	"ensembleSize": 30, 							// size of the ensemble
+	"newConfigurations": 5, 						// number of new configurations
+	"keepCurrentModel": "true", 					// try to adapt parameters on the fly and keep the underlying model
+	"reinitialiseWithClusters": "true", 			// if model cannot be kept, reinitialise with the existing clusters
+	"preventAlgorithmDeath": "true", 				// prevent removal of algorithm with only one configuration in ensemble
+	"evaluateMacro": "false", 						// evaluate macro clusters instead of micro
+	"keepGlobalIncumbent": "true", 					// prevent removal of the currently best configuration
+	"keepAlgorithmIncumbents": "true", 				// prevent removal of the currently best configuration per algorithm
+	"keepDefaultConfigurations": "true", 			// prevent removal of the starting configurations 
+	"lambda": 0.05, 								// fading parameter for reduction of  standard deviation
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
