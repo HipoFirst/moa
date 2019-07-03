@@ -221,10 +221,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			if (!bestPerformanceIdxMap.containsKey(algorithm) || performance > bestPerformanceValMap.get(algorithm)) {
 				bestPerformanceValMap.put(algorithm, performance); // best silhouette per algorithm
 				bestPerformanceIdxMap.put(algorithm, i); // index of best silhouette per algorithm
-				algorithmCount.put(algorithm, algorithmCount.getOrDefault(algorithm, 0) + 1); // number of instances per
-																								// algorithm //
-																								// algorithm in ensemble
 			}
+			// number of instances per algorithm in ensemble
+			algorithmCount.put(algorithm, algorithmCount.getOrDefault(algorithm, 0) + 1); 
 
 			trainRegressor(this.ensemble.get(i), performance);
 		}
