@@ -1,16 +1,16 @@
 {
-	"windowSize": 1000, 							// size of the window
-	"ensembleSize": 30, 							// size of the ensemble
-	"newConfigurations": 10, 						// number of new configurations
-	"keepCurrentModel": "true", 					// try to adapt parameters on the fly and keep the underlying model
-	"reinitialiseWithClusters": "true", 			// if model cannot be kept, reinitialise with the existing clusters
-	"preventAlgorithmDeath": "true", 				// prevent removal of algorithm with only one configuration in ensemble
-	"evaluateMacro": "false", 						// evaluate macro clusters instead of micro
-	"keepGlobalIncumbent": "true", 					// prevent removal of the currently best configuration
-	"keepAlgorithmIncumbents": "true", 				// prevent removal of the currently best configuration per algorithm
-	"keepDefaultConfigurations": "true", 			// prevent removal of the starting configurations 
-	"useTestEnsemble": "false", 					// test new configurations in separate ensemble
-	"lambda": 0.05, 								// fading parameter for reduction of  standard deviation
+	"windowSize": 1000,
+	"ensembleSize": 30,
+	"newConfigurations": 10,
+	"keepCurrentModel": "true",
+	"reinitialiseWithClusters": "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true", 
+	"keepAlgorithmIncumbents": "true", 
+	"keepDefaultConfigurations": "false", 
+	"useTestEnsemble": "false",
+	"lambda": 0.05, 
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
@@ -19,10 +19,6 @@
 				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
 				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
 				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]}
-				// {"parameter": "l", "type":"numeric", "value":1, "range":[0,1]}
-				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]},
-				// {"parameter": "c", "type":"categorical", "value":"female", "range":["female","male"]},
-				// {"parameter": "b", "type":"boolean", "value":"true"}
 			]
 		}
 		,

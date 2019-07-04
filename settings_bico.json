@@ -1,4 +1,3 @@
-
 {
 	"windowSize": 1000,
 	"ensembleSize": 30,
@@ -10,6 +9,7 @@
 	"keepGlobalIncumbent": "true",
 	"keepAlgorithmIncumbents": "true",
 	"keepDefaultConfigurations": "true",
+	"useTestEnsemble": "false",
 	"lambda": 0.05,
 	"algorithms": [
 		{
