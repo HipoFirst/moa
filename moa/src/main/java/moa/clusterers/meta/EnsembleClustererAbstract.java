@@ -898,10 +898,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 											+ alg.algorithm + ".txt");
 
 							PrintWriter paramWriter = new PrintWriter(new FileOutputStream(paramFile, true)); // append
-							BufferedReader br = new BufferedReader(new FileReader(paramFile));
 
 							// add header to param file
 							try {
+								BufferedReader br = new BufferedReader(new FileReader(paramFile));
 								if (br.readLine() == null) {
 									paramWriter.print("points\tsilhouette");
 									for (int p = 0; p < alg.parameters.length; p++) {
@@ -909,6 +909,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 									}
 									paramWriter.print("\n");
 								}
+								br.close();
 							} catch (IOException e) {
 							}
 
