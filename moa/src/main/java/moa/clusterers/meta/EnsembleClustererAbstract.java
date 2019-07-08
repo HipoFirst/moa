@@ -717,65 +717,70 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			confstreamNoPredictor.fileOption.setValue("settings_confStream_useTestEnsemble.json");
 			algorithms.add(confstreamNoPredictor);
 
-			// // confstream without keeping the starting configuration
-			// ConfStream confstreamNoDefault = new ConfStream();
-			// confstreamNoDefault.fileOption.setValue("settings_confStream_noDefault.json");
-			// algorithms.add(confstreamNoDefault);
+			// confstream without keeping the starting configuration
+			ConfStream confstreamNoDefault = new ConfStream();
+			confstreamNoDefault.fileOption.setValue("settings_confStream_noDefault.json");
+			algorithms.add(confstreamNoDefault);
 
-			// // run confstream only on single algorithms
-			// ConfStream confstreamDenstream = new ConfStream();
-			// confstreamDenstream.fileOption.setValue("settings_denstream.json");
-			// algorithms.add(confstreamDenstream);
+			// no algorithm incumbent, no default
+			ConfStream confstreamNoIncumbentsAndDefault = new ConfStream();
+			confstreamNoIncumbentsAndDefault.fileOption.setValue("settings_confStream_noIncumbentsAndDefault.json");
+			algorithms.add(confstreamNoIncumbentsAndDefault);
 
-			// ConfStream confstreamClustree = new ConfStream();
-			// confstreamClustree.fileOption.setValue("settings_clustree.json");
-			// algorithms.add(confstreamClustree);
+			// run confstream only on single algorithms
+			ConfStream confstreamDenstream = new ConfStream();
+			confstreamDenstream.fileOption.setValue("settings_denstream.json");
+			algorithms.add(confstreamDenstream);
 
-			// ConfStream confstreamClustream = new ConfStream();
-			// confstreamClustream.fileOption.setValue("settings_clustream.json");
-			// algorithms.add(confstreamClustream);
+			ConfStream confstreamClustree = new ConfStream();
+			confstreamClustree.fileOption.setValue("settings_clustree.json");
+			algorithms.add(confstreamClustree);
 
-			// ConfStream confstreamBico = new ConfStream();
-			// confstreamBico.fileOption.setValue("settings_bico.json");
-			// algorithms.add(confstreamBico);
+			ConfStream confstreamClustream = new ConfStream();
+			confstreamClustream.fileOption.setValue("settings_clustream.json");
+			algorithms.add(confstreamClustream);
 
-			// // compare on-the-fly adaption to reinitialisation with micro to reset
-			// ConfStream denStreamNoReinit = new ConfStream();
-			// denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
-			// algorithms.add(denStreamNoReinit);
+			ConfStream confstreamBico = new ConfStream();
+			confstreamBico.fileOption.setValue("settings_bico.json");
+			algorithms.add(confstreamBico);
 
-			// ConfStream denStreamReinit = new ConfStream();
-			// denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
-			// algorithms.add(denStreamReinit);
+			// compare on-the-fly adaption to reinitialisation with micro to reset
+			ConfStream denStreamNoReinit = new ConfStream();
+			denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
+			algorithms.add(denStreamNoReinit);
 
-			// // run algorithms with already optimised parameters
-			// if (names[s].equals("sensor") || names[s].equals("covertype")) {
-			// 	WithDBSCAN denstreamOptim = new WithDBSCAN();
-			// 	WithKmeans clustreamOptim = new WithKmeans();
-			// 	ClusTree clustreeOptim = new ClusTree();
-			// 	// Dstream dstreamOptim = new Dstream(); // only macro
-			// 	if (names[s].equals("sensor")) {
-			// 		denstreamOptim.epsilonOption.setValue(0.02);
-			// 		denstreamOptim.muOption.setValue(2.78);
-			// 		denstreamOptim.betaOption.setValue(0.69);
-			// 		clustreamOptim.kernelRadiFactorOption.setValue(7);
-			// 		clustreeOptim.maxHeightOption.setValue(9);
-			// 		// dstreamOptim.cmOption.setValue(1.38);
-			// 		// dstreamOptim.clOption.setValue(1.25);
-			// 	} else if (names[s].equals("covertype")) {
-			// 		denstreamOptim.epsilonOption.setValue(0.42);
-			// 		denstreamOptim.muOption.setValue(2.51);
-			// 		denstreamOptim.betaOption.setValue(0.33);
-			// 		clustreamOptim.kernelRadiFactorOption.setValue(3);
-			// 		clustreeOptim.maxHeightOption.setValue(6);
-			// 		// dstreamOptim.cmOption.setValue(1.65);
-			// 		// dstreamOptim.clOption.setValue(0.34);
-			// 	}
-			// 	algorithms.add(denstreamOptim);
-			// 	algorithms.add(clustreamOptim);
-			// 	algorithms.add(clustreeOptim);
-			// 	// algorithms.add(dstreamOptim);
-			// }
+			ConfStream denStreamReinit = new ConfStream();
+			denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
+			algorithms.add(denStreamReinit);
+
+			// run algorithms with already optimised parameters
+			if (names[s].equals("sensor") || names[s].equals("covertype")) {
+				WithDBSCAN denstreamOptim = new WithDBSCAN();
+				WithKmeans clustreamOptim = new WithKmeans();
+				ClusTree clustreeOptim = new ClusTree();
+				// Dstream dstreamOptim = new Dstream(); // only macro
+				if (names[s].equals("sensor")) {
+					denstreamOptim.epsilonOption.setValue(0.02);
+					denstreamOptim.muOption.setValue(2.78);
+					denstreamOptim.betaOption.setValue(0.69);
+					clustreamOptim.kernelRadiFactorOption.setValue(7);
+					clustreeOptim.maxHeightOption.setValue(9);
+					// dstreamOptim.cmOption.setValue(1.38);
+					// dstreamOptim.clOption.setValue(1.25);
+				} else if (names[s].equals("covertype")) {
+					denstreamOptim.epsilonOption.setValue(0.42);
+					denstreamOptim.muOption.setValue(2.51);
+					denstreamOptim.betaOption.setValue(0.33);
+					clustreamOptim.kernelRadiFactorOption.setValue(3);
+					clustreeOptim.maxHeightOption.setValue(6);
+					// dstreamOptim.cmOption.setValue(1.65);
+					// dstreamOptim.clOption.setValue(0.34);
+				}
+				algorithms.add(denstreamOptim);
+				algorithms.add(clustreamOptim);
+				algorithms.add(clustreeOptim);
+				// algorithms.add(dstreamOptim);
+			}
 
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();

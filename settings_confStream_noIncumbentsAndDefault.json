@@ -1,15 +1,15 @@
 {
 	"windowSize": 1000,
-	"ensembleSize": 20,
-	"newConfigurations": 10, 	
-	"keepCurrentModel": "true", 				
-	"reinitialiseWithClusters": "true", 	
-	"preventAlgorithmDeath": "true", 		
-	"evaluateMacro": "false", 					
-	"keepGlobalIncumbent": "true", 			
-	"keepAlgorithmIncumbents": "true", 		
-	"keepDefaultConfigurations": "true", 
-	"useTestEnsemble": "true",
+	"ensembleSize": 30,
+	"newConfigurations": 10,
+	"keepCurrentModel": "true",
+	"reinitialiseWithClusters": "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true", 
+	"keepAlgorithmIncumbents": "false", 
+	"keepDefaultConfigurations": "false", 
+	"useTestEnsemble": "false",
 	"lambda": 0.05, 
 	"algorithms": [
 		{
@@ -49,5 +49,22 @@
 				{"parameter": "d", "type":"integer", "value":100, "fixed":"true"}
 			]
 		}
+		// ,
+		// {
+		// 	"algorithm": "dstream.Dstream",
+		// 	"parameters": [
+		// 		{"parameter": "m", "type":"numeric", "value":3, "range":[1.001,10000]},
+		// 		{"parameter": "l", "type":"numeric", "value":0.8, "range":[0.001, 0.999]}
+		// 	]
+		// }
+		// ,
+		// {
+		// 	"algorithm": "streamkm.StreamKM",
+		// 	"parameters": [
+		// 		{"parameter": "s", "type":"integer", "value":10000, "range":[10,100000]},
+		// 		{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
+		// 		{"parameter": "l", "type":"integer", "value":10000, "fixed":"true"}
+		// 	]
+		// }
 	]
 }
