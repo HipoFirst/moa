@@ -9,7 +9,7 @@
 	"keepGlobalIncumbent": "true", 					// prevent removal of the currently best configuration
 	"keepAlgorithmIncumbents": "true", 				// prevent removal of the currently best configuration per algorithm
 	"keepDefaultConfigurations": "true", 			// prevent removal of the starting configurations 
-	"useTestEnsemble": "false", 					// test new configurations in separate ensemble
+	"useTestEnsemble": "true", 						// test new configurations in separate ensemble
 	"lambda": 0.05, 								// fading parameter for reduction of  standard deviation
 	"algorithms": [
 		{

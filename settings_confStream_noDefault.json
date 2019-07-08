@@ -9,7 +9,7 @@
 	"keepGlobalIncumbent": "true", 
 	"keepAlgorithmIncumbents": "true", 
 	"keepDefaultConfigurations": "false", 
-	"useTestEnsemble": "false",
+	"useTestEnsemble": "true",
 	"lambda": 0.05, 
 	"algorithms": [
 		{

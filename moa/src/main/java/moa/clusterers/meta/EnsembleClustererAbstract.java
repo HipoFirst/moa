@@ -712,10 +712,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			streamkm.lengthOption.setValue(lengths[s]);
 			algorithms.add(streamkm);
 
-			// confstream without predictor
-			ConfStream confstreamNoPredictor = new ConfStream();
-			confstreamNoPredictor.fileOption.setValue("settings_confStream_useTestEnsemble.json");
-			algorithms.add(confstreamNoPredictor);
+			// confstream with predictor
+			ConfStream confstreamusePredictor = new ConfStream();
+			confstreamusePredictor.fileOption.setValue("settings_confStream_usePredictor.json");
+			algorithms.add(confstreamusePredictor);
 
 			// confstream without keeping the starting configuration
 			ConfStream confstreamNoDefault = new ConfStream();
