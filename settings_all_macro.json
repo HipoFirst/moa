@@ -8,7 +8,7 @@
 	"evaluateMacro": "true",
 	"keepGlobalIncumbent": "true",
 	"keepAlgorithmIncumbents": "true",
-	"keepDefaultConfigurations": "true",
+	"keepInitialConfigurations": "true",
 	"useTestEnsemble": "true",
 	"lambda": 0.05,
 	"algorithms": [

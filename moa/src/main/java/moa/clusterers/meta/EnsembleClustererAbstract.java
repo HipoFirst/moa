@@ -73,7 +73,7 @@ class GeneralConfiguration {
 	public boolean evaluateMacro;
 	public boolean keepGlobalIncumbent;
 	public boolean keepAlgorithmIncumbents;
-	public boolean keepDefaultConfigurations;
+	public boolean keepInitialConfigurations;
 	public boolean useTestEnsemble;
 }
 
@@ -362,7 +362,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		}
 
 		// keep all default configurations
-		if (this.settings.keepDefaultConfigurations) {
+		if (this.settings.keepInitialConfigurations) {
 			for (Algorithm algorithm : this.ensemble) {
 				if (algorithm.isDefault) {
 					algorithm.preventRemoval = true;
