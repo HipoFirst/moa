@@ -722,9 +722,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			confstreamNoDefault.fileOption.setValue("settings_confStream_noDefault.json");
 			algorithms.add(confstreamNoDefault);
 
+			// confstream without keeping the starting configuration or the algorithm incumbent or the overall incumbent
+			ConfStream confstreamNoIncumentAndIncumbentsAndDefault = new ConfStream();
+			confstreamNoIncumentAndIncumbentsAndDefault.fileOption.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndDefault.json");
+			algorithms.add(confstreamNoIncumentAndIncumbentsAndDefault);
+
 			// no algorithm incumbent, no default
 			ConfStream confstreamNoIncumbentsAndDefault = new ConfStream();
-			confstreamNoIncumbentsAndDefault.fileOption.setValue("settings_confStream_noIncumbentsAndDefault.json");
+			confstreamNoIncumbentsAndDefault.fileOption.setValue("settings_confStream_noAlgorithmIncumbentsAndDefault.json");
 			algorithms.add(confstreamNoIncumbentsAndDefault);
 
 			// run confstream only on single algorithms
@@ -745,6 +750,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			algorithms.add(confstreamBico);
 
 			// compare on-the-fly adaption to reinitialisation with micro to reset
+			ConfStream confStreamReinit = new ConfStream();
+			confStreamReinit.fileOption.setValue("settings_confStream_reinitialiseModel.json");
+			algorithms.add(confStreamReinit);
+
+			ConfStream confStreamReset = new ConfStream();
+			confStreamReset.fileOption.setValue("settings_confStream_resetModel.json");
+			algorithms.add(confStreamReset);
+
 			ConfStream denStreamNoReinit = new ConfStream();
 			denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
 			algorithms.add(denStreamNoReinit);
