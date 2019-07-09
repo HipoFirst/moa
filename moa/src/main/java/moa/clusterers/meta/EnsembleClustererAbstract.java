@@ -718,19 +718,19 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			algorithms.add(confstreamusePredictor);
 
 			// confstream without keeping the starting configuration
-			ConfStream confstreamNoDefault = new ConfStream();
-			confstreamNoDefault.fileOption.setValue("settings_confStream_noDefault.json");
-			algorithms.add(confstreamNoDefault);
+			ConfStream confstreamNoInitial = new ConfStream();
+			confstreamNoInitial.fileOption.setValue("settings_confStream_noInitial.json");
+			algorithms.add(confstreamNoInitial);
 
 			// confstream without keeping the starting configuration or the algorithm incumbent or the overall incumbent
-			ConfStream confstreamNoIncumentAndIncumbentsAndDefault = new ConfStream();
-			confstreamNoIncumentAndIncumbentsAndDefault.fileOption.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndDefault.json");
-			algorithms.add(confstreamNoIncumentAndIncumbentsAndDefault);
+			ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new ConfStream();
+			confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
+			algorithms.add(confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial);
 
 			// no algorithm incumbent, no default
-			ConfStream confstreamNoIncumbentsAndDefault = new ConfStream();
-			confstreamNoIncumbentsAndDefault.fileOption.setValue("settings_confStream_noAlgorithmIncumbentsAndDefault.json");
-			algorithms.add(confstreamNoIncumbentsAndDefault);
+			ConfStream confstreamNoAlgorithmIncumbentsAndDefault = new ConfStream();
+			confstreamNoAlgorithmIncumbentsAndDefault.fileOption.setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
+			algorithms.add(confstreamNoAlgorithmIncumbentsAndDefault);
 
 			// run confstream only on single algorithms
 			ConfStream confstreamDenstream = new ConfStream();
