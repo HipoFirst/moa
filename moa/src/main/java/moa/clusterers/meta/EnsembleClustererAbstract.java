@@ -895,7 +895,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						resultWriter.print("\t");
 
 						if (result == null) {
-							resultWriter.print(-1.0);
+							resultWriter.print("nan");
 						} else {
 							silh.evaluateClustering(result, null, windowPoints);
 
