@@ -776,6 +776,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					denstreamOptim.epsilonOption.setValue(0.02);
 					denstreamOptim.muOption.setValue(2.78);
 					denstreamOptim.betaOption.setValue(0.69);
+					denstreamOptim.lambdaOption.setValue(0.001);
 					clustreamOptim.kernelRadiFactorOption.setValue(7);
 					clustreeOptim.maxHeightOption.setValue(9);
 					// dstreamOptim.cmOption.setValue(1.38);
@@ -784,6 +785,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					denstreamOptim.epsilonOption.setValue(0.42);
 					denstreamOptim.muOption.setValue(2.51);
 					denstreamOptim.betaOption.setValue(0.33);
+					denstreamOptim.lambdaOption.setValue(0.001);
 					clustreamOptim.kernelRadiFactorOption.setValue(3);
 					clustreeOptim.maxHeightOption.setValue(6);
 					// dstreamOptim.cmOption.setValue(1.65);
