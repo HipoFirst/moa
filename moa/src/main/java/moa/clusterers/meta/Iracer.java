@@ -91,8 +91,8 @@ public abstract class Iracer {
 		} else if(algorithmName.equals("CluStream")){
 			WithKmeans clustream = new WithKmeans();
 			int k = Integer.parseInt(args[3]);
-			int t = Integer.parseInt(args[4]);
-			int m = Integer.parseInt(args[5]);
+			int m = Integer.parseInt(args[4]);
+			int t = Integer.parseInt(args[5]);
 			clustream.kOption.setValue(k);
 			clustream.kernelRadiFactorOption.setValue(t);
 			clustream.maxNumKernelsOption.setValue(m);
