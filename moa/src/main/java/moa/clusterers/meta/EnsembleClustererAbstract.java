@@ -211,7 +211,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			double performance = computeSilhouette(this.ensemble.get(i));
 			this.silhouettes.add(performance);
-			if(performance > bestPerformance){
+			if (performance > bestPerformance) {
 				this.bestModel = i;
 				bestPerformance = performance;
 			}
@@ -657,19 +657,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		streams.add(rbf);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		"sensor_relevant_standardized.csv",
-		"", false);
+		file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		"powersupply_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		"covertype_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "covertype_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
@@ -722,14 +718,17 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			confstreamNoInitial.fileOption.setValue("settings_confStream_noInitial.json");
 			algorithms.add(confstreamNoInitial);
 
-			// confstream without keeping the starting configuration or the algorithm incumbent or the overall incumbent
+			// confstream without keeping the starting configuration or the algorithm
+			// incumbent or the overall incumbent
 			ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new ConfStream();
-			confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
+			confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption
+					.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
 			algorithms.add(confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial);
 
 			// no algorithm incumbent, no default
 			ConfStream confstreamNoAlgorithmIncumbentsAndDefault = new ConfStream();
-			confstreamNoAlgorithmIncumbentsAndDefault.fileOption.setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
+			confstreamNoAlgorithmIncumbentsAndDefault.fileOption
+					.setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
 			algorithms.add(confstreamNoAlgorithmIncumbentsAndDefault);
 
 			// run confstream only on single algorithms
@@ -767,35 +766,106 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			algorithms.add(denStreamReinit);
 
 			// run algorithms with already optimised parameters
-			if (names[s].equals("sensor") || names[s].equals("covertype")) {
-				WithDBSCAN denstreamOptim = new WithDBSCAN();
-				WithKmeans clustreamOptim = new WithKmeans();
-				ClusTree clustreeOptim = new ClusTree();
-				// Dstream dstreamOptim = new Dstream(); // only macro
-				if (names[s].equals("sensor")) {
-					denstreamOptim.epsilonOption.setValue(0.02);
-					denstreamOptim.muOption.setValue(2.78);
-					denstreamOptim.betaOption.setValue(0.69);
-					denstreamOptim.lambdaOption.setValue(0.001);
-					clustreamOptim.kernelRadiFactorOption.setValue(7);
-					clustreeOptim.maxHeightOption.setValue(9);
-					// dstreamOptim.cmOption.setValue(1.38);
-					// dstreamOptim.clOption.setValue(1.25);
-				} else if (names[s].equals("covertype")) {
-					denstreamOptim.epsilonOption.setValue(0.42);
-					denstreamOptim.muOption.setValue(2.51);
-					denstreamOptim.betaOption.setValue(0.33);
-					denstreamOptim.lambdaOption.setValue(0.001);
-					clustreamOptim.kernelRadiFactorOption.setValue(3);
-					clustreeOptim.maxHeightOption.setValue(6);
-					// dstreamOptim.cmOption.setValue(1.65);
-					// dstreamOptim.clOption.setValue(0.34);
-				}
-				algorithms.add(denstreamOptim);
-				algorithms.add(clustreamOptim);
-				algorithms.add(clustreeOptim);
-				// algorithms.add(dstreamOptim);
+			if (names[s].equals("sensor")) {
+				WithDBSCAN denstreamcRand = new WithDBSCAN();
+				WithKmeans clustreamcRand = new WithKmeans();
+				ClusTree clustreecRand = new ClusTree();
+
+				denstreamcRand.epsilonOption.setValue(0.02);
+				denstreamcRand.muOption.setValue(2.78);
+				denstreamcRand.betaOption.setValue(0.69);
+				denstreamcRand.lambdaOption.setValue(0.001);
+				clustreamcRand.kernelRadiFactorOption.setValue(7);
+				clustreecRand.maxHeightOption.setValue(9);
+
+				algorithms.add(denstreamcRand);
+				algorithms.add(clustreamcRand);
+				algorithms.add(clustreecRand);
+
+			} else if (names[s].equals("covertype")) {
+
+				WithDBSCAN denstreamcRand = new WithDBSCAN();
+				WithKmeans clustreamcRand = new WithKmeans();
+				ClusTree clustreecRand = new ClusTree();
+
+				denstreamcRand.epsilonOption.setValue(0.42);
+				denstreamcRand.muOption.setValue(2.51);
+				denstreamcRand.betaOption.setValue(0.33);
+				denstreamcRand.lambdaOption.setValue(0.001);
+				clustreamcRand.kernelRadiFactorOption.setValue(3);
+				clustreecRand.maxHeightOption.setValue(6);
+
+				algorithms.add(denstreamcRand);
+				algorithms.add(clustreamcRand);
+				algorithms.add(clustreecRand);
 			}
+
+			WithDBSCAN denstreamIrace = new WithDBSCAN();
+			ClusTree clustreeIrace = new ClusTree();
+			WithKmeans clustreamIrace = new WithKmeans();
+			BICO bicoIrace = new BICO();
+
+			if (names[s].equals("RBF")) {
+				denstreamIrace.epsilonOption.setValue(0.0757); // e
+				denstreamIrace.betaOption.setValue(0.3205); // b
+				denstreamIrace.muOption.setValue(2913.1242); // m
+				denstreamIrace.offlineOption.setValue(16.489); // o
+				denstreamIrace.lambdaOption.setValue(0.1037); // l
+				clustreeIrace.maxHeightOption.setValue(); // H
+				clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+				clustreamIrace.kOption.setValue(); // k
+				clustreamIrace.maxNumKernelsOption.setValue(); // m
+				clustreamIrace.kernelRadiFactorOption.setValue(); // t
+				bicoIrace.numClustersOption.setValue(); // k
+				bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
+				bicoIrace.numProjectionsOption.setValue(); // p
+			} else if (names[s].equals("sensor")) {
+				denstreamIrace.epsilonOption.setValue(0.8014); // e
+				denstreamIrace.betaOption.setValue(0.2593); // b
+				denstreamIrace.muOption.setValue(9085.1493); // m
+				denstreamIrace.offlineOption.setValue(7.0789); // o
+				denstreamIrace.lambdaOption.setValue(0.0744); // l
+				clustreeIrace.maxHeightOption.setValue(); // H
+				clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+				clustreamIrace.kOption.setValue(8); // k
+				clustreamIrace.maxNumKernelsOption.setValue(98); // m
+				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
+				bicoIrace.numClustersOption.setValue(); // k
+				bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
+				bicoIrace.numProjectionsOption.setValue(); // p
+			} else if (names[s].equals("powersupply")) {
+				denstreamIrace.epsilonOption.setValue(0.3469); // e
+				denstreamIrace.betaOption.setValue(0.0174); // b
+				denstreamIrace.muOption.setValue(4027.0768); // m
+				denstreamIrace.offlineOption.setValue(7.5439); // o
+				denstreamIrace.lambdaOption.setValue(0.8842); // l
+				clustreeIrace.maxHeightOption.setValue(1); // H
+				clustreeIrace.breadthFirstStrategyOption.setValue(true); // B
+				clustreamIrace.kOption.setValue(5); // k
+				clustreamIrace.maxNumKernelsOption.setValue(200); // m
+				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
+				bicoIrace.numClustersOption.setValue(14); // k
+				bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
+				bicoIrace.numProjectionsOption.setValue(3); // p
+			} else if (names[s].equals("covertype")) {
+				denstreamIrace.epsilonOption.setValue(0.5493); // e
+				denstreamIrace.betaOption.setValue(0.6114); // b
+				denstreamIrace.muOption.setValue(282.3994); // m
+				denstreamIrace.offlineOption.setValue(3.3658); // o
+				denstreamIrace.lambdaOption.setValue(0.1069); // l
+				clustreeIrace.maxHeightOption.setValue(1); // H
+				clustreeIrace.breadthFirstStrategyOption.setValue(true); // B
+				clustreamIrace.kOption.setValue(3); // k
+				clustreamIrace.maxNumKernelsOption.setValue(4); // m
+				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
+				bicoIrace.numClustersOption.setValue(16); // k
+				bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
+				bicoIrace.numProjectionsOption.setValue(2); // p
+			}
+			algorithms.add(denstreamIrace);
+			algorithms.add(clustreamIrace);
+			algorithms.add(clustreeIrace);
+			algorithms.add(bicoIrace);
 
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();
@@ -825,9 +895,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				algorithms.get(a).resetLearningImpl();
 				streams.get(s).restart();
 
-				File resultFile = new File(names[s] + "_"
-						+ algorithms.get(a).getCLICreationString(Clusterer.class)
-						+ ".txt");
+				File resultFile = new File(
+						names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + ".txt");
 				PrintWriter resultWriter = new PrintWriter(resultFile);
 
 				PrintWriter ensembleWriter = null;

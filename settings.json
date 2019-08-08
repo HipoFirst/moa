@@ -1,6 +1,6 @@
 {
 	"windowSize": 1000, 							// size of the window
-	"ensembleSize": 30, 							// size of the ensemble
+	"ensembleSize": 20, 							// size of the ensemble
 	"newConfigurations": 10, 						// number of new configurations
 	"keepCurrentModel": "true", 					// try to adapt parameters on the fly and keep the underlying model
 	"reinitialiseWithClusters": "true", 			// if model cannot be kept, reinitialise with the existing clusters

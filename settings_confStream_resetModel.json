@@ -1,6 +1,6 @@
 {
 	"windowSize": 1000,
-	"ensembleSize": 30,
+	"ensembleSize": 20,
 	"newConfigurations": 10,
 	"keepCurrentModel": "false",
 	"reinitialiseWithClusters": "false",
