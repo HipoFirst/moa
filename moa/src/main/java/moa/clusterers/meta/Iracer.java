@@ -3,6 +3,7 @@ package moa.clusterers.meta;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 import com.github.javacliparser.FileOption;
@@ -24,7 +25,7 @@ import moa.streams.clustering.SimpleCSVStream;
 
 public abstract class Iracer {
 
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) {
 
 		int windowSize = 1000;
 
@@ -35,9 +36,9 @@ public abstract class Iracer {
 		ClusteringStream stream = null;
 		AbstractClusterer algorithm = null;
 		int length = 0;
-		int dimensions =0;
+		int dimensions = 0;
 
-		if(streamName.equals("rbf")){
+		if (streamName.equals("rbf")) {
 			RandomRBFGeneratorEvents rbf = new RandomRBFGeneratorEvents();
 			rbf.modelRandomSeedOption.setValue(2410);
 			rbf.eventFrequencyOption.setValue(30000);
@@ -46,29 +47,29 @@ public abstract class Iracer {
 			length = 2000000;
 			dimensions = 2;
 			stream = rbf;
-		} else if(streamName.equals("sensor")){
+		} else if (streamName.equals("sensor")) {
 			SimpleCSVStream file = new SimpleCSVStream();
 			file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv", "", false);
 			length = 2219803;
 			dimensions = 4;
 			stream = file;
-		} else if(streamName.equals("powersupply")){
+		} else if (streamName.equals("powersupply")) {
 			SimpleCSVStream file = new SimpleCSVStream();
 			file.csvFileOption = new FileOption("", 'z', "", "powersupply_relevant_standardized.csv", "", false);
 			length = 29928;
 			dimensions = 2;
 			stream = file;
-		} else if(streamName.equals("covertype")){
+		} else if (streamName.equals("covertype")) {
 			SimpleCSVStream file = new SimpleCSVStream();
 			file.csvFileOption = new FileOption("", 'z', "", "covertype_relevant_standardized.csv", "", false);
 			length = 581012;
 			dimensions = 10;
 			stream = file;
-		} else{
+		} else {
 			throw new RuntimeException("Stream not found.");
 		}
 
-		if(algorithmName.equals("DenStream")){
+		if (algorithmName.equals("DenStream")) {
 			WithDBSCAN denstream = new WithDBSCAN();
 			float e = Float.parseFloat(args[3]);
 			float b = Float.parseFloat(args[4]);
@@ -80,15 +81,15 @@ public abstract class Iracer {
 			denstream.muOption.setValue(m);
 			denstream.offlineOption.setValue(o);
 			denstream.lambdaOption.setValue(l);
-			algorithm=denstream;
-		} else if(algorithmName.equals("ClusTree")){
+			algorithm = denstream;
+		} else if (algorithmName.equals("ClusTree")) {
 			ClusTree clustree = new ClusTree();
 			int H = Integer.parseInt(args[3]);
 			boolean B = Boolean.parseBoolean(args[4]);
-			clustree.maxHeightOption.setValue(H); //TODO B option
-			clustree.breadthFirstStrategyOption.setValue(B); //TODO B option
-			algorithm=clustree;
-		} else if(algorithmName.equals("CluStream")){
+			clustree.maxHeightOption.setValue(H);
+			clustree.breadthFirstStrategyOption.setValue(B);
+			algorithm = clustree;
+		} else if (algorithmName.equals("CluStream")) {
 			WithKmeans clustream = new WithKmeans();
 			int k = Integer.parseInt(args[3]);
 			int m = Integer.parseInt(args[4]);
@@ -96,8 +97,8 @@ public abstract class Iracer {
 			clustream.kOption.setValue(k);
 			clustream.kernelRadiFactorOption.setValue(t);
 			clustream.maxNumKernelsOption.setValue(m);
-			algorithm=clustream;
-		} else if(algorithmName.equals("BICO")){
+			algorithm = clustream;
+		} else if (algorithmName.equals("BICO")) {
 			BICO bico = new BICO();
 			int k = Integer.parseInt(args[3]);
 			int n = Integer.parseInt(args[4]);
@@ -106,11 +107,10 @@ public abstract class Iracer {
 			bico.maxNumClusterFeaturesOption.setValue(n);
 			bico.numProjectionsOption.setValue(p);
 			bico.numDimensionsOption.setValue(dimensions);
-			algorithm=bico;
-		} else{
+			algorithm = bico;
+		} else {
 			throw new RuntimeException("Algorithm not found.");
 		}
-
 
 		algorithm.prepareForUse();
 
@@ -118,63 +118,71 @@ public abstract class Iracer {
 		// streams.get(s).restart();
 
 		File resultFile = new File(filename);
-		PrintWriter resultWriter = new PrintWriter(resultFile);
-		resultWriter.println("points\tsilhouette");
+		PrintWriter resultWriter = null;
 
-		ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
+		try {
+			stream.prepareForUse();
 
-		stream.prepareForUse();
+			resultWriter = new PrintWriter(resultFile);
+			resultWriter.println("points\tsilhouette");
 
-		for (int d = 1; d < length; d++) {
-			Instance inst = stream.nextInstance().getData();
+			ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
 
-			// apparently numAttributes is the class index when no class exists
-			if (inst.classIndex() < inst.numAttributes()) {
-				inst.deleteAttributeAt(inst.classIndex()); // remove class label
-			}
-			DataPoint point = new DataPoint(inst, d);
-			windowPoints.add(point);
+			for (int d = 1; d < length; d++) {
+				Instance inst = stream.nextInstance().getData();
 
-			algorithm.trainOnInstanceImpl(inst);
-
-			if (d % windowSize == 0) {
-
-				SilhouetteCoefficient silh = new SilhouetteCoefficient();
-
-				Clustering result = null;
-				boolean evaluateMacro = false;
-
-				// compare micro-clusters
-				if (!evaluateMacro) {
-					result = algorithm.getMicroClusteringResult();
+				// apparently numAttributes is the class index when no class exists
+				if (inst.classIndex() < inst.numAttributes()) {
+					inst.deleteAttributeAt(inst.classIndex()); // remove class label
 				}
-				// compare macro-clusters
-				if (evaluateMacro || result == null) {
-					result = algorithm.getClusteringResult();
-				}
+				DataPoint point = new DataPoint(inst, d);
+				windowPoints.add(point);
 
-				resultWriter.print(d);
-				resultWriter.print("\t");
+				algorithm.trainOnInstanceImpl(inst);
 
-				if (result == null) {
-					resultWriter.print("nan");
-				} else {
-					silh.evaluateClustering(result, null, windowPoints);
+				if (d % windowSize == 0) {
 
-					if (result.size() == 0 || result.size() == 1) {
+					SilhouetteCoefficient silh = new SilhouetteCoefficient();
+
+					Clustering result = null;
+					boolean evaluateMacro = false;
+
+					// compare micro-clusters
+					if (!evaluateMacro) {
+						result = algorithm.getMicroClusteringResult();
+					}
+					// compare macro-clusters
+					if (evaluateMacro || result == null) {
+						result = algorithm.getClusteringResult();
+					}
+
+					resultWriter.print(d);
+					resultWriter.print("\t");
+
+					if (result == null) {
 						resultWriter.print("nan");
 					} else {
-						resultWriter.printf("%f", silh.getLastValue(0));
-					}
-				}
-				resultWriter.print("\n");
+						silh.evaluateClustering(result, null, windowPoints);
 
-				// windowInstances.clear();
-				windowPoints.clear();
-				resultWriter.flush();
+						if (result.size() == 0 || result.size() == 1) {
+							resultWriter.print("nan");
+						} else {
+							resultWriter.printf("%f", silh.getLastValue(0));
+						}
+					}
+					resultWriter.print("\n");
+
+					// windowInstances.clear();
+					windowPoints.clear();
+					resultWriter.flush();
+				}
 			}
+
+			resultWriter.close();
+		} catch (Exception e) {
+			resultWriter.close();
+			resultFile.delete(); // if it failed, delete the result file		
 		}
-		resultWriter.close();
 	}
 
 }
