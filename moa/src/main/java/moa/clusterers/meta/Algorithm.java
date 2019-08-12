@@ -28,7 +28,7 @@ public class Algorithm {
 	public boolean isDefault;
 
 	// copy constructor
-	public Algorithm(Algorithm x, double lambda, boolean keepCurrentModel, boolean reinitialiseWithClusters, int verbose) {
+	public Algorithm(Algorithm x, double lambda, double reset, boolean keepCurrentModel, boolean reinitialiseWithClusters, int verbose) {
 
 		// make a (mostly) deep copy of the algorithm
 		this.algorithm = x.algorithm;
@@ -39,7 +39,7 @@ public class Algorithm {
 
 		for (int i = 0; i < x.parameters.length; i++) {
 			this.parameters[i] = x.parameters[i].copy();
-			this.parameters[i].sampleNewConfig(lambda, verbose);
+			this.parameters[i].sampleNewConfig(lambda, reset, verbose);
 		}
 
 		if (keepCurrentModel) {

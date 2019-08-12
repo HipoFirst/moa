@@ -11,6 +11,7 @@
 	"keepInitialConfigurations": "true", 			// prevent removal of the starting configurations 
 	"useTestEnsemble": "true", 						// test new configurations in separate ensemble
 	"lambda": 0.05, 								// fading parameter for reduction of  standard deviation
+	"resetProbability": 0.01,						// reset probability for standard deviation or probability vector
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",

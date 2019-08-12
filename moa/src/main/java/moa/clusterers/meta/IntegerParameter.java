@@ -62,10 +62,14 @@ public class IntegerParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda, int verbose) {
+	public void sampleNewConfig(double lambda, double reset, int verbose) {
 
 		if(this.fixed){
 			return;
+		}
+
+		if (Math.random() < reset) {
+			this.std = (this.range[1] - this.range[0]) / 2;
 		}
 
 		// update configuration

@@ -11,6 +11,7 @@
 	"keepInitialConfigurations": "true", 
 	"useTestEnsemble": "false",
 	"lambda": 0.05, 
+	"resetProbability": 0.01,
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",

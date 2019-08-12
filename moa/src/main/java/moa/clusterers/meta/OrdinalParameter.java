@@ -57,11 +57,16 @@ public class OrdinalParameter implements IParameter {
 		return this.parameter;
 	}
 
-	public void sampleNewConfig(double lambda, int verbose) {
+	public void sampleNewConfig(double lambda, double reset, int verbose) {
+		
 		// update configuration
+		if (Math.random() < reset) {
+			double upper = (double) (this.range.length - 1);
+			this.std = upper / 2;
+		}
+
 		// treat index of range as integer parameter
-		TruncatedNormal trncnormal = new TruncatedNormal(this.numericValue, this.std, (double) (this.range.length - 1),
-				0.0); // limits are the indexes of the range
+		TruncatedNormal trncnormal = new TruncatedNormal(this.numericValue, this.std, 0.0, (double) (this.range.length - 1)); // limits are the indexes of the range
 		int newValue = (int) Math.round(trncnormal.sample());
 
 		if (verbose >= 3) {

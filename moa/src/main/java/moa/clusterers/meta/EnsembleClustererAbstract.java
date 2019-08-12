@@ -75,6 +75,7 @@ class GeneralConfiguration {
 	public boolean keepAlgorithmIncumbents;
 	public boolean keepInitialConfigurations;
 	public boolean useTestEnsemble;
+	public double resetProbability;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -474,7 +475,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			System.out.println("Selected Configuration " + parentIdx + " as parent: "
 					+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 		}
-		Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda,
+		Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda, this.settings.resetProbability,
 				this.settings.keepCurrentModel, this.settings.reinitialiseWithClusters, this.verbose);
 
 		return newAlgorithm;
@@ -713,24 +714,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			confstreamusePredictor.fileOption.setValue("settings_confStream_usePredictor.json");
 			algorithms.add(confstreamusePredictor);
 
-			// confstream without keeping the starting configuration
-			ConfStream confstreamNoInitial = new ConfStream();
-			confstreamNoInitial.fileOption.setValue("settings_confStream_noInitial.json");
-			algorithms.add(confstreamNoInitial);
-
-			// confstream without keeping the starting configuration or the algorithm
-			// incumbent or the overall incumbent
-			ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new ConfStream();
-			confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption
-					.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
-			algorithms.add(confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial);
-
-			// no algorithm incumbent, no default
-			ConfStream confstreamNoAlgorithmIncumbentsAndDefault = new ConfStream();
-			confstreamNoAlgorithmIncumbentsAndDefault.fileOption
-					.setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
-			algorithms.add(confstreamNoAlgorithmIncumbentsAndDefault);
-
 			// run confstream only on single algorithms
 			ConfStream confstreamDenstream = new ConfStream();
 			confstreamDenstream.fileOption.setValue("settings_denstream.json");
@@ -748,29 +731,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			confstreamBico.fileOption.setValue("settings_bico.json");
 			algorithms.add(confstreamBico);
 
-			// compare on-the-fly adaption to reinitialisation with micro to reset
-			ConfStream confStreamReinit = new ConfStream();
-			confStreamReinit.fileOption.setValue("settings_confStream_reinitialiseModel.json");
-			algorithms.add(confStreamReinit);
-
-			ConfStream confStreamReset = new ConfStream();
-			confStreamReset.fileOption.setValue("settings_confStream_resetModel.json");
-			algorithms.add(confStreamReset);
-
-			ConfStream denStreamNoReinit = new ConfStream();
-			denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
-			algorithms.add(denStreamNoReinit);
-
-			ConfStream denStreamReinit = new ConfStream();
-			denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
-			algorithms.add(denStreamReinit);
 
 			// run algorithms with already optimised parameters
-			if (names[s].equals("sensor")) {
-				WithDBSCAN denstreamcRand = new WithDBSCAN();
-				WithKmeans clustreamcRand = new WithKmeans();
-				ClusTree clustreecRand = new ClusTree();
+			WithDBSCAN denstreamcRand = new WithDBSCAN();
+			WithKmeans clustreamcRand = new WithKmeans();
+			ClusTree clustreecRand = new ClusTree();
 
+			if (names[s].equals("sensor")) {
 				denstreamcRand.epsilonOption.setValue(0.02);
 				denstreamcRand.muOption.setValue(2.78);
 				denstreamcRand.betaOption.setValue(0.69);
@@ -783,11 +750,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				algorithms.add(clustreecRand);
 
 			} else if (names[s].equals("covertype")) {
-
-				WithDBSCAN denstreamcRand = new WithDBSCAN();
-				WithKmeans clustreamcRand = new WithKmeans();
-				ClusTree clustreecRand = new ClusTree();
-
 				denstreamcRand.epsilonOption.setValue(0.42);
 				denstreamcRand.muOption.setValue(2.51);
 				denstreamcRand.betaOption.setValue(0.33);
@@ -811,28 +773,32 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				denstreamIrace.muOption.setValue(2913.1242); // m
 				denstreamIrace.offlineOption.setValue(16.489); // o
 				denstreamIrace.lambdaOption.setValue(0.1037); // l
-				clustreeIrace.maxHeightOption.setValue(); // H
-				clustreeIrace.breadthFirstStrategyOption.setValue(); // B
-				clustreamIrace.kOption.setValue(); // k
-				clustreamIrace.maxNumKernelsOption.setValue(); // m
-				clustreamIrace.kernelRadiFactorOption.setValue(); // t
-				bicoIrace.numClustersOption.setValue(); // k
-				bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
-				bicoIrace.numProjectionsOption.setValue(); // p
+				// clustreeIrace.maxHeightOption.setValue(); // H
+				// clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+				clustreamIrace.kOption.setValue(5); // k
+				clustreamIrace.maxNumKernelsOption.setValue(100); // m
+				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
+				// bicoIrace.numClustersOption.setValue(); // k
+				// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
+				// bicoIrace.numProjectionsOption.setValue(); // p
+				algorithms.add(denstreamIrace);
+				algorithms.add(clustreamIrace);
 			} else if (names[s].equals("sensor")) {
 				denstreamIrace.epsilonOption.setValue(0.8014); // e
 				denstreamIrace.betaOption.setValue(0.2593); // b
 				denstreamIrace.muOption.setValue(9085.1493); // m
 				denstreamIrace.offlineOption.setValue(7.0789); // o
 				denstreamIrace.lambdaOption.setValue(0.0744); // l
-				clustreeIrace.maxHeightOption.setValue(); // H
-				clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+				// clustreeIrace.maxHeightOption.setValue(); // H
+				// clustreeIrace.breadthFirstStrategyOption.setValue(); // B
 				clustreamIrace.kOption.setValue(8); // k
 				clustreamIrace.maxNumKernelsOption.setValue(98); // m
 				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				bicoIrace.numClustersOption.setValue(); // k
-				bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
-				bicoIrace.numProjectionsOption.setValue(); // p
+				// bicoIrace.numClustersOption.setValue(); // k
+				// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
+				// bicoIrace.numProjectionsOption.setValue(); // p
+				algorithms.add(denstreamIrace);
+				algorithms.add(clustreamIrace);
 			} else if (names[s].equals("powersupply")) {
 				denstreamIrace.epsilonOption.setValue(0.3469); // e
 				denstreamIrace.betaOption.setValue(0.0174); // b
@@ -847,6 +813,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.numClustersOption.setValue(14); // k
 				bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
 				bicoIrace.numProjectionsOption.setValue(3); // p
+				algorithms.add(denstreamIrace);
+				algorithms.add(clustreamIrace);
+				algorithms.add(clustreeIrace);
+				algorithms.add(bicoIrace);
 			} else if (names[s].equals("covertype")) {
 				denstreamIrace.epsilonOption.setValue(0.5493); // e
 				denstreamIrace.betaOption.setValue(0.6114); // b
@@ -861,11 +831,47 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.numClustersOption.setValue(16); // k
 				bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
 				bicoIrace.numProjectionsOption.setValue(2); // p
+				algorithms.add(denstreamIrace);
+				algorithms.add(clustreamIrace);
+				algorithms.add(clustreeIrace);
+				algorithms.add(bicoIrace);
 			}
-			algorithms.add(denstreamIrace);
-			algorithms.add(clustreamIrace);
-			algorithms.add(clustreeIrace);
-			algorithms.add(bicoIrace);
+
+			// // confstream without keeping the starting configuration
+			// ConfStream confstreamNoInitial = new ConfStream();
+			// confstreamNoInitial.fileOption.setValue("settings_confStream_noInitial.json");
+			// algorithms.add(confstreamNoInitial);
+
+			// // confstream without keeping the starting configuration or the algorithm
+			// // incumbent or the overall incumbent
+			// ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new ConfStream();
+			// confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption
+			// 		.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
+			// algorithms.add(confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial);
+
+			// // no algorithm incumbent, no default
+			// ConfStream confstreamNoAlgorithmIncumbentsAndDefault = new ConfStream();
+			// confstreamNoAlgorithmIncumbentsAndDefault.fileOption
+			// 		.setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
+			// algorithms.add(confstreamNoAlgorithmIncumbentsAndDefault);
+
+			// // compare on-the-fly adaption to reinitialisation with micro to reset
+			// ConfStream confStreamReinit = new ConfStream();
+			// confStreamReinit.fileOption.setValue("settings_confStream_reinitialiseModel.json");
+			// algorithms.add(confStreamReinit);
+
+			// ConfStream confStreamReset = new ConfStream();
+			// confStreamReset.fileOption.setValue("settings_confStream_resetModel.json");
+			// algorithms.add(confStreamReset);
+
+			// ConfStream denStreamNoReinit = new ConfStream();
+			// denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
+			// algorithms.add(denStreamNoReinit);
+
+			// ConfStream denStreamReinit = new ConfStream();
+			// denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
+			// algorithms.add(denStreamReinit);
+
 
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();
