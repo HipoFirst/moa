@@ -32,39 +32,33 @@ public class ParallelRunner {
 
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException, ExecutionException {
 
-		String filename = args[0];
-		int length = Integer.parseInt(args[1]);
-		String name = args[2];
-		int dimensions = Integer.parseInt(args[3]);
+		int numberOfCores = Integer.parseInt(args[0]);
+		String name = args[1];
+		String filename = args[2];
+		int length = Integer.parseInt(args[3]);
+		int dimensions = Integer.parseInt(args[4]);
 	
+		// int numberOfCores = 1;
 
-		// file = new SimpleCSVStream();
-		// file.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "",
-		// false);
-		// streams.add(file);
-
-		// file = new SimpleCSVStream();
-		// file.csvFileOption = new FileOption("", 'z', "",
-		// "sensor_relevant_standardized.csv", "", false);
-		// streams.add(file);
-
-		// file = new SimpleCSVStream();
-		// file.csvFileOption = new FileOption("", 'z', "",
-		// "powersupply_relevant_standardized.csv", "", false);
-		// streams.add(file);
-
-		// file = new SimpleCSVStream();
-		// file.csvFileOption = new FileOption("", 'z', "",
-		// "covertype_relevant_standardized.csv", "", false);
-		// streams.add(file);
-
-		// int[] lengths = { 2000000, 2219803, 29928, 581012 };
-		// String[] names = { "RBF", "sensor", "powersupply", "covertype" };
-		// int[] dimensions = { 2, 4, 2, 10 };
-
+		// String name =  "RBF";
+		// String filename = "RBF_relevant.csv";
 		// int length = 2000000;
-		// String name = "RBF";
 		// int dimensions = 2;
+
+		// String name =  "sensor";
+		// String filename = "sensor_relevant_standardized.csv";
+		// int length = 2219803;
+		// int dimensions = 4;
+
+		// String name =  "powersupply";
+		// String filename = "powersupply_relevant_standardized.csv";
+		// int length = 29928;
+		// int dimensions = 2;
+
+		// String name =  "covertype";
+		// String filename = "covertype_relevant_standardized.csv";
+		// int length = 581012;
+		// int dimensions = 10;
 
 		int windowSize = 1000;
 
@@ -263,16 +257,13 @@ public class ParallelRunner {
 
 
 
-		ForkJoinPool myPool = new ForkJoinPool(8);
+		ForkJoinPool myPool = new ForkJoinPool(numberOfCores);
 		myPool.submit(() -> algorithms.parallelStream().forEach((algorithm) -> {
 
 			try {
 
 				SimpleCSVStream stream = new SimpleCSVStream();
 				stream.csvFileOption = new FileOption("", 'z', "", filename, "", false);
-				// SimpleCSVStream stream = new SimpleCSVStream();
-				// stream.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "", false);
-
 
 				System.out.println("Starting Stream: " + name);
 				stream.prepareForUse();
