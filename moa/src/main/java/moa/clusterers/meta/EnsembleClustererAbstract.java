@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.github.javacliparser.FileOption;
 import com.google.gson.Gson;
@@ -62,20 +65,21 @@ class AlgorithmConfiguration {
 // This contains the general settings (such as the max ensemble size) as well as
 // an array of Algorithm Settings
 class GeneralConfiguration {
-	public int windowSize;
-	public int ensembleSize;
-	public int newConfigurations;
+	public int windowSize = 1000;
+	public int ensembleSize = 20;
+	public int newConfigurations = 10;
 	public AlgorithmConfiguration[] algorithms;
-	public boolean keepCurrentModel;
-	public double lambda;
-	public boolean preventAlgorithmDeath;
-	public boolean reinitialiseWithClusters;
-	public boolean evaluateMacro;
-	public boolean keepGlobalIncumbent;
-	public boolean keepAlgorithmIncumbents;
-	public boolean keepInitialConfigurations;
-	public boolean useTestEnsemble;
-	public double resetProbability;
+	public boolean keepCurrentModel = true;
+	public double lambda = 0.05;
+	public boolean preventAlgorithmDeath = true;
+	public boolean reinitialiseWithClusters = true;
+	public boolean evaluateMacro = false;
+	public boolean keepGlobalIncumbent = true;
+	public boolean keepAlgorithmIncumbents = true;
+	public boolean keepInitialConfigurations = true;
+	public boolean useTestEnsemble = true;
+	public double resetProbability = 0.01;
+	public int numberOfCores = 1;
 }
 
 public abstract class EnsembleClustererAbstract extends AbstractClusterer {
@@ -93,6 +97,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	GeneralConfiguration settings;
 	ArrayList<Double> silhouettes;
 	int verbose = 0;
+	protected ExecutorService executor;
+	int numberOfCores;
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -135,6 +141,13 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// this.ensemble.get(i).clusterer.resetLearning();
 			this.ensemble.get(i).init();
 		}
+
+		if (this.settings.numberOfCores == -1) {
+			this.numberOfCores = Runtime.getRuntime().availableProcessors();
+		} else {
+			this.numberOfCores = this.settings.numberOfCores;
+		}
+		this.executor = Executors.newFixedThreadPool(this.numberOfCores);
 	}
 
 	@Override
@@ -149,15 +162,34 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		this.windowPoints.add(point); // remember points of the current window
 		this.instancesSeen++;
 
-		// train all models with the instance
-		for (int i = 0; i < this.ensemble.size(); i++) {
-			this.ensemble.get(i).clusterer.trainOnInstance(inst);
-		}
-
-		if (this.settings.useTestEnsemble && this.candidateEnsemble.size() > 0) {
+		if (this.numberOfCores == 1) {
 			// train all models with the instance
-			for (int i = 0; i < this.candidateEnsemble.size(); i++) {
-				this.candidateEnsemble.get(i).clusterer.trainOnInstance(inst);
+			for (int i = 0; i < this.ensemble.size(); i++) {
+				this.ensemble.get(i).clusterer.trainOnInstance(inst);
+			}
+			if (this.settings.useTestEnsemble && this.candidateEnsemble.size() > 0) {
+				// train all models with the instance
+				for (int i = 0; i < this.candidateEnsemble.size(); i++) {
+					this.candidateEnsemble.get(i).clusterer.trainOnInstance(inst);
+				}
+			}
+		} else {
+			ArrayList<EnsembleRunnable> trainers = new ArrayList<EnsembleRunnable>();
+			for (int i = 0; i < this.ensemble.size(); i++) {
+				EnsembleRunnable trainer = new EnsembleRunnable(this.ensemble.get(i).clusterer, inst);
+				trainers.add(trainer);
+			}
+			if (this.settings.useTestEnsemble && this.candidateEnsemble.size() > 0) {
+				// train all models with the instance
+				for (int i = 0; i < this.candidateEnsemble.size(); i++) {
+					EnsembleRunnable trainer = new EnsembleRunnable(this.candidateEnsemble.get(i).clusterer, inst);
+					trainers.add(trainer);
+				}
+			}
+			try {
+				this.executor.invokeAll(trainers);
+			} catch (InterruptedException ex) {
+				throw new RuntimeException("Could not call invokeAll() on training threads.");
 			}
 		}
 
@@ -475,8 +507,9 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			System.out.println("Selected Configuration " + parentIdx + " as parent: "
 					+ this.ensemble.get(parentIdx).clusterer.getCLICreationString(Clusterer.class));
 		}
-		Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda, this.settings.resetProbability,
-				this.settings.keepCurrentModel, this.settings.reinitialiseWithClusters, this.verbose);
+		Algorithm newAlgorithm = new Algorithm(this.ensemble.get(parentIdx), this.settings.lambda,
+				this.settings.resetProbability, this.settings.keepCurrentModel, this.settings.reinitialiseWithClusters,
+				this.verbose);
 
 		return newAlgorithm;
 	}
@@ -641,8 +674,33 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+
 		super.prepareForUseImpl(monitor, repository);
 
+	}
+
+	// Modified from:
+	// https://github.com/Waikato/moa/blob/master/moa/src/main/java/moa/classifiers/meta/AdaptiveRandomForest.java#L157
+	// Helper class for parallelisation
+	protected class EnsembleRunnable implements Runnable, Callable<Integer> {
+		final private AbstractClusterer clusterer;
+		final private Instance instance;
+
+		public EnsembleRunnable(AbstractClusterer clusterer, Instance instance) {
+			this.clusterer = clusterer;
+			this.instance = instance;
+		}
+
+		@Override
+		public void run() {
+			clusterer.trainOnInstance(this.instance);
+		}
+
+		@Override
+		public Integer call() throws Exception {
+			run();
+			return 0;
+		}
 	}
 
 	public static void main(String[] args) throws FileNotFoundException {
@@ -650,19 +708,27 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		ArrayList<ClusteringStream> streams = new ArrayList<ClusteringStream>();
 		SimpleCSVStream file;
 
-		RandomRBFGeneratorEvents rbf = new RandomRBFGeneratorEvents();
-		rbf.modelRandomSeedOption.setValue(2410);
-		rbf.eventFrequencyOption.setValue(30000);
-		rbf.eventDeleteCreateOption.setValue(true);
-		rbf.eventMergeSplitOption.setValue(true);
-		streams.add(rbf);
+		// String filename = args[0];
+		// int length = Integer.parseInt(args[1]);
+		// String name = args[2];
+		// int dimension = Integer.parseInt(args[3]);
+		// file = new SimpleCSVStream();
+		// file.csvFileOption = new FileOption("", 'z', "", filename, "", false);
+		// streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "",
+		false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "powersupply_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "",
+		"sensor_relevant_standardized.csv", "", false);
+		streams.add(file);
+
+		file = new SimpleCSVStream();
+		file.csvFileOption = new FileOption("", 'z', "",
+		"powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
@@ -672,10 +738,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		int[] lengths = { 2000000, 2219803, 29928, 581012 };
 		String[] names = { "RBF", "sensor", "powersupply", "covertype" };
 		int[] dimensions = { 2, 4, 2, 10 };
-
-		// int[] lengths = { 50000 };
-		// String[] names = { "RBF" };
-		// int[] dimensions = { 2 };
 
 		int windowSize = 1000;
 
@@ -702,12 +764,12 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			bico.numDimensionsOption.setValue(dimensions[s]);
 			algorithms.add(bico);
 
-			Dstream dstream = new Dstream(); // only macro
-			algorithms.add(dstream);
+			// Dstream dstream = new Dstream(); // only macro
+			// algorithms.add(dstream);
 
-			StreamKM streamkm = new StreamKM(); // only macro
-			streamkm.lengthOption.setValue(lengths[s]);
-			algorithms.add(streamkm);
+			// StreamKM streamkm = new StreamKM(); // only macro
+			// streamkm.lengthOption.setValue(lengths[s]);
+			// algorithms.add(streamkm);
 
 			// confstream with predictor
 			ConfStream confstreamusePredictor = new ConfStream();
@@ -730,7 +792,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			ConfStream confstreamBico = new ConfStream();
 			confstreamBico.fileOption.setValue("settings_bico.json");
 			algorithms.add(confstreamBico);
-
 
 			// run algorithms with already optimised parameters
 			WithDBSCAN denstreamcRand = new WithDBSCAN();
@@ -844,15 +905,16 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 			// // confstream without keeping the starting configuration or the algorithm
 			// // incumbent or the overall incumbent
-			// ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new ConfStream();
+			// ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new
+			// ConfStream();
 			// confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption
-			// 		.setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
+			// .setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
 			// algorithms.add(confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial);
 
 			// // no algorithm incumbent, no default
 			// ConfStream confstreamNoAlgorithmIncumbentsAndDefault = new ConfStream();
 			// confstreamNoAlgorithmIncumbentsAndDefault.fileOption
-			// 		.setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
+			// .setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
 			// algorithms.add(confstreamNoAlgorithmIncumbentsAndDefault);
 
 			// // compare on-the-fly adaption to reinitialisation with micro to reset
@@ -871,7 +933,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 			// ConfStream denStreamReinit = new ConfStream();
 			// denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
 			// algorithms.add(denStreamReinit);
-
 
 			System.out.println("Stream: " + names[s]);
 			streams.get(s).prepareForUse();
