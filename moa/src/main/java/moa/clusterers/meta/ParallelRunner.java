@@ -32,10 +32,10 @@ public class ParallelRunner {
 
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException, ExecutionException {
 
-		// String filename = args[0];
-		// int length = Integer.parseInt(args[1]);
-		// String name = args[2];
-		// int dimensions = Integer.parseInt(args[3]);
+		String filename = args[0];
+		int length = Integer.parseInt(args[1]);
+		String name = args[2];
+		int dimensions = Integer.parseInt(args[3]);
 	
 
 		// file = new SimpleCSVStream();
@@ -62,9 +62,9 @@ public class ParallelRunner {
 		// String[] names = { "RBF", "sensor", "powersupply", "covertype" };
 		// int[] dimensions = { 2, 4, 2, 10 };
 
-		int length = 2000000;
-		String name = "RBF";
-		int dimensions = 2;
+		// int length = 2000000;
+		// String name = "RBF";
+		// int dimensions = 2;
 
 		int windowSize = 1000;
 
@@ -268,10 +268,10 @@ public class ParallelRunner {
 
 			try {
 
-				// SimpleCSVStream stream = new SimpleCSVStream();
-				// stream.csvFileOption = new FileOption("", 'z', "", filename, "", false);
 				SimpleCSVStream stream = new SimpleCSVStream();
-				stream.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "", false);
+				stream.csvFileOption = new FileOption("", 'z', "", filename, "", false);
+				// SimpleCSVStream stream = new SimpleCSVStream();
+				// stream.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "", false);
 
 
 				System.out.println("Starting Stream: " + name);
