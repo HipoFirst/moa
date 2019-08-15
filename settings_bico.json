@@ -12,6 +12,7 @@
 	"useTestEnsemble": "true",
 	"lambda": 0.05,
 	"resetProbability": 0.01,
+	"numberOfCores": 1,
 	"algorithms": [
 		{
 			"algorithm": "kmeanspm.BICO",

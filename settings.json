@@ -12,6 +12,7 @@
 	"useTestEnsemble": "true", 						// test new configurations in separate ensemble
 	"lambda": 0.05, 								// fading parameter for reduction of  standard deviation
 	"resetProbability": 0.01,						// reset probability for standard deviation or probability vector
+	"numberOfCores": 1,								// number of cores for parallel training (-1 for all available cores)
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
