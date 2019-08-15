@@ -39,14 +39,16 @@ public abstract class Iracer {
 		int dimensions = 0;
 
 		if (streamName.equals("rbf")) {
-			RandomRBFGeneratorEvents rbf = new RandomRBFGeneratorEvents();
-			rbf.modelRandomSeedOption.setValue(2410);
-			rbf.eventFrequencyOption.setValue(30000);
-			rbf.eventDeleteCreateOption.setValue(true);
-			rbf.eventMergeSplitOption.setValue(true);
+			// RandomRBFGeneratorEvents rbf = new RandomRBFGeneratorEvents();
+			// rbf.modelRandomSeedOption.setValue(2410);
+			// rbf.eventFrequencyOption.setValue(30000);
+			// rbf.eventDeleteCreateOption.setValue(true);
+			// rbf.eventMergeSplitOption.setValue(true);
+			SimpleCSVStream file = new SimpleCSVStream();
+			file.csvFileOption = new FileOption("", 'z', "", "RBF_relevant_standardized.csv", "", false);
 			length = 2000000;
 			dimensions = 2;
-			stream = rbf;
+			stream = file;
 		} else if (streamName.equals("sensor")) {
 			SimpleCSVStream file = new SimpleCSVStream();
 			file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv", "", false);
