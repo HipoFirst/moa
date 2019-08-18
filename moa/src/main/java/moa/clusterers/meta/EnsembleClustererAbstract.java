@@ -850,8 +850,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				denstreamIrace.muOption.setValue(9085.1493); // m
 				denstreamIrace.offlineOption.setValue(7.0789); // o
 				denstreamIrace.lambdaOption.setValue(0.0744); // l
-				// clustreeIrace.maxHeightOption.setValue(); // H
-				// clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+				clustreeIrace.maxHeightOption.setValue(3); // H
+				clustreeIrace.breadthFirstStrategyOption.setValue(true); // B
 				clustreamIrace.kOption.setValue(8); // k
 				clustreamIrace.maxNumKernelsOption.setValue(98); // m
 				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
