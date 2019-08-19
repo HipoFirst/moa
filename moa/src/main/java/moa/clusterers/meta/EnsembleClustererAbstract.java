@@ -804,6 +804,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				denstreamcRand.betaOption.setValue(0.69);
 				denstreamcRand.lambdaOption.setValue(0.001);
 				clustreamcRand.kernelRadiFactorOption.setValue(7);
+				clustreamcRand.kOption.setValue(55);
 				clustreecRand.maxHeightOption.setValue(9);
 
 				algorithms.add(denstreamcRand);
@@ -816,6 +817,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				denstreamcRand.betaOption.setValue(0.33);
 				denstreamcRand.lambdaOption.setValue(0.001);
 				clustreamcRand.kernelRadiFactorOption.setValue(3);
+				clustreamcRand.kOption.setValue(7);
 				clustreecRand.maxHeightOption.setValue(6);
 
 				algorithms.add(denstreamcRand);
@@ -859,6 +861,7 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
 				// bicoIrace.numProjectionsOption.setValue(); // p
 				algorithms.add(denstreamIrace);
+				algorithms.add(clustreeIrace);
 				algorithms.add(clustreamIrace);
 			} else if (names[s].equals("powersupply")) {
 				denstreamIrace.epsilonOption.setValue(0.3469); // e
@@ -875,8 +878,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
 				bicoIrace.numProjectionsOption.setValue(3); // p
 				algorithms.add(denstreamIrace);
-				algorithms.add(clustreamIrace);
 				algorithms.add(clustreeIrace);
+				algorithms.add(clustreamIrace);
 				algorithms.add(bicoIrace);
 			} else if (names[s].equals("covertype")) {
 				denstreamIrace.epsilonOption.setValue(0.5493); // e
@@ -893,8 +896,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
 				bicoIrace.numProjectionsOption.setValue(2); // p
 				algorithms.add(denstreamIrace);
-				algorithms.add(clustreamIrace);
 				algorithms.add(clustreeIrace);
+				algorithms.add(clustreamIrace);
 				algorithms.add(bicoIrace);
 			}
 

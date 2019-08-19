@@ -116,6 +116,7 @@ public class ParallelRunner {
 			denstreamcRand.betaOption.setValue(0.69);
 			denstreamcRand.lambdaOption.setValue(0.001);
 			clustreamcRand.kernelRadiFactorOption.setValue(7);
+			clustreamcRand.kOption.setValue(55);
 			clustreecRand.maxHeightOption.setValue(9);
 
 			algorithms.add(denstreamcRand);
@@ -128,6 +129,7 @@ public class ParallelRunner {
 			denstreamcRand.betaOption.setValue(0.33);
 			denstreamcRand.lambdaOption.setValue(0.001);
 			clustreamcRand.kernelRadiFactorOption.setValue(3);
+			clustreamcRand.kOption.setValue(7);
 			clustreecRand.maxHeightOption.setValue(6);
 
 			algorithms.add(denstreamcRand);
