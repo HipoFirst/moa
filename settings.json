@@ -21,7 +21,7 @@
 				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
 				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
 				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]},
-				{"parameter": "l", "type":"numeric", "value":0.001, "range":[0,1]}
+				{"parameter": "l", "type":"numeric", "value":0.25, "range":[0,1]}
 				// {"parameter": "o", "type":"ordinal", "value":"good", "range":["bad","medium","good"]},
 				// {"parameter": "c", "type":"categorical", "value":"female", "range":["female","male"]},
 				// {"parameter": "b", "type":"boolean", "value":"true"}
@@ -51,7 +51,7 @@
 				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
 				{"parameter": "n", "type":"integer", "value":1000, "range":[1,2000]},
 				{"parameter": "p", "type":"integer", "value":10, "range":[1,20]},
-				{"parameter": "d", "type":"integer", "value":100, "fixed":"true"}
+				{"parameter": "d", "type":"integer", "value":10, "fixed":"true"}
 			]
 		}
 		// ,

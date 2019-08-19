@@ -38,7 +38,7 @@ public class ParallelRunner {
 		int length = Integer.parseInt(args[3]);
 		int dimensions = Integer.parseInt(args[4]);
 	
-		// int numberOfCores = 1;
+		// int numberOfCores = 4;
 
 		// String name =  "RBF";
 		// String filename = "RBF_relevant.csv";
@@ -154,6 +154,7 @@ public class ParallelRunner {
 			// bicoIrace.numClustersOption.setValue(); // k
 			// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
 			// bicoIrace.numProjectionsOption.setValue(); // p
+			// bicoIrace.numDimensionsOption.setValue(dimensions);
 			algorithms.add(denstreamIrace);
 			algorithms.add(clustreamIrace);
 		} else if (name.equals("sensor")) {
@@ -170,7 +171,9 @@ public class ParallelRunner {
 			// bicoIrace.numClustersOption.setValue(); // k
 			// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
 			// bicoIrace.numProjectionsOption.setValue(); // p
+			// bicoIrace.numDimensionsOption.setValue(dimensions);
 			algorithms.add(denstreamIrace);
+			algorithms.add(clustreeIrace);
 			algorithms.add(clustreamIrace);
 		} else if (name.equals("powersupply")) {
 			denstreamIrace.epsilonOption.setValue(0.3469); // e
@@ -186,9 +189,10 @@ public class ParallelRunner {
 			bicoIrace.numClustersOption.setValue(14); // k
 			bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
 			bicoIrace.numProjectionsOption.setValue(3); // p
+			bicoIrace.numDimensionsOption.setValue(dimensions);
 			algorithms.add(denstreamIrace);
-			algorithms.add(clustreamIrace);
 			algorithms.add(clustreeIrace);
+			algorithms.add(clustreamIrace);
 			algorithms.add(bicoIrace);
 		} else if (name.equals("covertype")) {
 			denstreamIrace.epsilonOption.setValue(0.5493); // e
@@ -204,9 +208,10 @@ public class ParallelRunner {
 			bicoIrace.numClustersOption.setValue(16); // k
 			bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
 			bicoIrace.numProjectionsOption.setValue(2); // p
+			bicoIrace.numDimensionsOption.setValue(dimensions);
 			algorithms.add(denstreamIrace);
-			algorithms.add(clustreamIrace);
 			algorithms.add(clustreeIrace);
+			algorithms.add(clustreamIrace);
 			algorithms.add(bicoIrace);
 		}
 
