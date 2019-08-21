@@ -52,7 +52,7 @@ class ParameterConfiguration {
 	public Object value;
 	public Object[] range;
 	public String type;
-	public boolean fixed;
+	public boolean optimise = true;
 }
 
 // This class contains the settings of an algorithm (such as name) as well as an
@@ -836,15 +836,17 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				denstreamIrace.muOption.setValue(2913.1242); // m
 				denstreamIrace.offlineOption.setValue(16.489); // o
 				denstreamIrace.lambdaOption.setValue(0.1037); // l
-				// clustreeIrace.maxHeightOption.setValue(); // H
-				// clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+				clustreeIrace.maxHeightOption.setValue(8); // H
+				clustreeIrace.breadthFirstStrategyOption.setValue(false); // B
 				clustreamIrace.kOption.setValue(5); // k
 				clustreamIrace.maxNumKernelsOption.setValue(100); // m
 				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
 				// bicoIrace.numClustersOption.setValue(); // k
 				// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
 				// bicoIrace.numProjectionsOption.setValue(); // p
+				// bicoIrace.numDimensionsOption.setValue(dimensions);
 				algorithms.add(denstreamIrace);
+				algorithms.add(clustreeIrace);
 				algorithms.add(clustreamIrace);
 			} else if (names[s].equals("sensor")) {
 				denstreamIrace.epsilonOption.setValue(0.8014); // e
@@ -857,12 +859,14 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				clustreamIrace.kOption.setValue(8); // k
 				clustreamIrace.maxNumKernelsOption.setValue(98); // m
 				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				// bicoIrace.numClustersOption.setValue(); // k
-				// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
-				// bicoIrace.numProjectionsOption.setValue(); // p
+				bicoIrace.numClustersOption.setValue(6); // k
+				bicoIrace.maxNumClusterFeaturesOption.setValue(1880); // n
+				bicoIrace.numProjectionsOption.setValue(9); // p
+				bicoIrace.numDimensionsOption.setValue(dimensions[s]);
 				algorithms.add(denstreamIrace);
 				algorithms.add(clustreeIrace);
 				algorithms.add(clustreamIrace);
+				algorithms.add(bicoIrace);
 			} else if (names[s].equals("powersupply")) {
 				denstreamIrace.epsilonOption.setValue(0.3469); // e
 				denstreamIrace.betaOption.setValue(0.0174); // b

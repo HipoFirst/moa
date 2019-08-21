@@ -48,7 +48,7 @@
 				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
 				{"parameter": "n", "type":"integer", "value":1000, "range":[1,2000]},
 				{"parameter": "p", "type":"integer", "value":10, "range":[1,20]},
-				{"parameter": "d", "type":"integer", "value":100, "fixed":"true"}
+				{"parameter": "d", "type":"integer", "value":100, "optimise":"false"}
 			]
 		}
 		// ,

@@ -13,14 +13,20 @@ public class BooleanParameter implements IParameter {
 	private String[] range = { "false", "true" };
 	private Attribute attribute;
 	private ArrayList<Double> probabilities;
+	private boolean optimise;
 
 	public BooleanParameter(BooleanParameter x) {
 		this.parameter = x.parameter;
 		this.numericValue = x.numericValue;
 		this.value = x.value;
-		this.range = x.range.clone();
 		this.attribute = x.attribute;
-		this.probabilities = new ArrayList<Double>(x.probabilities);
+		this.optimise = x.optimise;
+		
+		if(this.optimise){
+			this.range = x.range.clone();
+			this.probabilities = new ArrayList<Double>(x.probabilities);
+		}
+
 	}
 
 	public BooleanParameter(ParameterConfiguration x) {
@@ -32,10 +38,13 @@ public class BooleanParameter implements IParameter {
 			}
 		}
 		this.attribute = new Attribute(x.parameter);
+		this.optimise = x.optimise;
 
-		this.probabilities = new ArrayList<Double>(2);
-		for (int i = 0; i < 2; i++) {
-			this.probabilities.add(0.5); // equal probabilities
+		if(this.optimise){
+			this.probabilities = new ArrayList<Double>(2);
+			for (int i = 0; i < 2; i++) {
+				this.probabilities.add(0.5); // equal probabilities
+			}
 		}
 	}
 
@@ -72,6 +81,10 @@ public class BooleanParameter implements IParameter {
 	}
 
 	public void sampleNewConfig(double lambda, double reset, int verbose) {
+
+		if(!this.optimise){
+			return;
+		}
 
 		if (Math.random() < reset) {
 			for (int i = 0; i < this.probabilities.size(); i++) {

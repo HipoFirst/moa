@@ -14,30 +14,39 @@ public class CategoricalParameter implements IParameter {
 	private String[] range;
 	private Attribute attribute;
 	private ArrayList<Double> probabilities;
+	private boolean optimise;
 
 	public CategoricalParameter(CategoricalParameter x) {
 		this.parameter = x.parameter;
 		this.numericValue = x.numericValue;
 		this.value = x.value;
-		this.range = x.range.clone();
 		this.attribute = x.attribute;
-		this.probabilities = new ArrayList<Double>(x.probabilities);
+		this.optimise = x.optimise;
+
+		if(this.optimise){
+			this.range = x.range.clone();
+			this.probabilities = new ArrayList<Double>(x.probabilities);
+		}
 	}
 
 	public CategoricalParameter(ParameterConfiguration x) {
 		this.parameter = x.parameter;
 		this.value = String.valueOf(x.value);
-		this.range = new String[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = String.valueOf(x.range[i]);
-			if (this.range[i].equals(this.value)) {
-				this.numericValue = i; // get index of init value
-			}
-		}
 		this.attribute = new Attribute(x.parameter, Arrays.asList(range));
-		this.probabilities = new ArrayList<Double>(x.range.length);
-		for (int i = 0; i < x.range.length; i++) {
-			this.probabilities.add(1.0 / x.range.length); // equal probabilities
+		this.optimise = x.optimise;
+
+		if(this.optimise){
+			this.range = new String[x.range.length];
+			for (int i = 0; i < x.range.length; i++) {
+				range[i] = String.valueOf(x.range[i]);
+				if (this.range[i].equals(this.value)) {
+					this.numericValue = i; // get index of init value
+				}
+			}
+			this.probabilities = new ArrayList<Double>(x.range.length);
+			for (int i = 0; i < x.range.length; i++) {
+				this.probabilities.add(1.0 / x.range.length); // equal probabilities
+			}
 		}
 	}
 
@@ -66,6 +75,10 @@ public class CategoricalParameter implements IParameter {
 	}
 
 	public void sampleNewConfig(double lambda, double reset, int verbose) {
+
+		if(!this.optimise){
+			return;
+		}
 
 		if (Math.random() < reset) {
 			for (int i = 0; i < this.probabilities.size(); i++) {

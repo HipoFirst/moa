@@ -9,15 +9,15 @@ public class IntegerParameter implements IParameter {
 	private int[] range;
 	private double std;
 	private Attribute attribute;
-	private boolean fixed;
+	private boolean optimise;
 
 	public IntegerParameter(IntegerParameter x) {
 		this.parameter = x.parameter;
 		this.value = x.value;
 		this.attribute = x.attribute;// new Attribute(x.parameter);
-		this.fixed = x.fixed;
+		this.optimise = x.optimise;
 
-		if(!this.fixed){
+		if(this.optimise){
 			this.range = x.range.clone();
 			this.std = x.std;
 		}
@@ -27,9 +27,9 @@ public class IntegerParameter implements IParameter {
 		this.parameter = x.parameter;
 		this.value = (int) (double) x.value; // TODO fix casts
 		this.attribute = new Attribute(x.parameter);
-		this.fixed = x.fixed;
+		this.optimise = x.optimise;
 
-		if(!this.fixed){
+		if(this.optimise){
 			this.range = new int[x.range.length];
 			for (int i = 0; i < x.range.length; i++) {
 				range[i] = (int) (double) x.range[i];
@@ -64,7 +64,7 @@ public class IntegerParameter implements IParameter {
 
 	public void sampleNewConfig(double lambda, double reset, int verbose) {
 
-		if(this.fixed){
+		if(!this.optimise){
 			return;
 		}
 

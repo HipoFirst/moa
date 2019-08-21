@@ -9,24 +9,34 @@ public class NumericalParameter implements IParameter {
 	private double[] range;
 	private double std;
 	private Attribute attribute;
+	private boolean optimise;
 
 	public NumericalParameter(NumericalParameter x) {
 		this.parameter = x.parameter;
 		this.value = x.value;
-		this.range = x.range.clone();
-		this.std = x.std;
 		this.attribute = new Attribute(x.parameter);
+		this.optimise = x.optimise;
+
+		if(this.optimise){
+			this.range = x.range.clone();
+			this.std = x.std;
+		}
+
 	}
 
 	public NumericalParameter(ParameterConfiguration x) {
 		this.parameter = x.parameter;
 		this.value = (double) x.value;
-		this.range = new double[x.range.length];
-		for (int i = 0; i < x.range.length; i++) {
-			range[i] = (double) x.range[i];
-		}
-		this.std = (this.range[1] - this.range[0]) / 2;
 		this.attribute = new Attribute(x.parameter);
+		this.optimise = x.optimise;
+
+		if(this.optimise){
+			this.range = new double[x.range.length];
+			for (int i = 0; i < x.range.length; i++) {
+				range[i] = (double) x.range[i];
+			}
+			this.std = (this.range[1] - this.range[0]) / 2;
+		}
 	}
 
 	public NumericalParameter copy() {
@@ -50,6 +60,10 @@ public class NumericalParameter implements IParameter {
 	}
 
 	public void sampleNewConfig(double lambda, double reset,  int verbose) {
+
+		if(!this.optimise){
+			return;
+		}
 
 		// trying to balanced exploitation vs exploration by resetting the std
 		if (Math.random() < reset) {

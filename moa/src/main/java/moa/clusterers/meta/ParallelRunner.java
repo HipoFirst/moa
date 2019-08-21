@@ -148,8 +148,8 @@ public class ParallelRunner {
 			denstreamIrace.muOption.setValue(2913.1242); // m
 			denstreamIrace.offlineOption.setValue(16.489); // o
 			denstreamIrace.lambdaOption.setValue(0.1037); // l
-			// clustreeIrace.maxHeightOption.setValue(); // H
-			// clustreeIrace.breadthFirstStrategyOption.setValue(); // B
+			clustreeIrace.maxHeightOption.setValue(8); // H
+			clustreeIrace.breadthFirstStrategyOption.setValue(false); // B
 			clustreamIrace.kOption.setValue(5); // k
 			clustreamIrace.maxNumKernelsOption.setValue(100); // m
 			clustreamIrace.kernelRadiFactorOption.setValue(2); // t
@@ -158,6 +158,7 @@ public class ParallelRunner {
 			// bicoIrace.numProjectionsOption.setValue(); // p
 			// bicoIrace.numDimensionsOption.setValue(dimensions);
 			algorithms.add(denstreamIrace);
+			algorithms.add(clustreeIrace);
 			algorithms.add(clustreamIrace);
 		} else if (name.equals("sensor")) {
 			denstreamIrace.epsilonOption.setValue(0.8014); // e
@@ -170,13 +171,14 @@ public class ParallelRunner {
 			clustreamIrace.kOption.setValue(8); // k
 			clustreamIrace.maxNumKernelsOption.setValue(98); // m
 			clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-			// bicoIrace.numClustersOption.setValue(); // k
-			// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
-			// bicoIrace.numProjectionsOption.setValue(); // p
-			// bicoIrace.numDimensionsOption.setValue(dimensions);
+			bicoIrace.numClustersOption.setValue(6); // k
+			bicoIrace.maxNumClusterFeaturesOption.setValue(1880); // n
+			bicoIrace.numProjectionsOption.setValue(9); // p
+			bicoIrace.numDimensionsOption.setValue(dimensions);
 			algorithms.add(denstreamIrace);
 			algorithms.add(clustreeIrace);
 			algorithms.add(clustreamIrace);
+			algorithms.add(bicoIrace);
 		} else if (name.equals("powersupply")) {
 			denstreamIrace.epsilonOption.setValue(0.3469); // e
 			denstreamIrace.betaOption.setValue(0.0174); // b
