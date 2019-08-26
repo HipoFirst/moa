@@ -153,13 +153,10 @@ public class ParallelRunner {
 			clustreamIrace.kOption.setValue(5); // k
 			clustreamIrace.maxNumKernelsOption.setValue(100); // m
 			clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-			// bicoIrace.numClustersOption.setValue(); // k
-			// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
-			// bicoIrace.numProjectionsOption.setValue(); // p
-			// bicoIrace.numDimensionsOption.setValue(dimensions);
-			algorithms.add(denstreamIrace);
-			algorithms.add(clustreeIrace);
-			algorithms.add(clustreamIrace);
+			bicoIrace.numClustersOption.setValue(2); // k
+			bicoIrace.maxNumClusterFeaturesOption.setValue(36); // n
+			bicoIrace.numProjectionsOption.setValue(7); // p
+			bicoIrace.numDimensionsOption.setValue(dimensions);
 		} else if (name.equals("sensor")) {
 			denstreamIrace.epsilonOption.setValue(0.8014); // e
 			denstreamIrace.betaOption.setValue(0.2593); // b
@@ -175,10 +172,6 @@ public class ParallelRunner {
 			bicoIrace.maxNumClusterFeaturesOption.setValue(1880); // n
 			bicoIrace.numProjectionsOption.setValue(9); // p
 			bicoIrace.numDimensionsOption.setValue(dimensions);
-			algorithms.add(denstreamIrace);
-			algorithms.add(clustreeIrace);
-			algorithms.add(clustreamIrace);
-			algorithms.add(bicoIrace);
 		} else if (name.equals("powersupply")) {
 			denstreamIrace.epsilonOption.setValue(0.3469); // e
 			denstreamIrace.betaOption.setValue(0.0174); // b
@@ -194,10 +187,6 @@ public class ParallelRunner {
 			bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
 			bicoIrace.numProjectionsOption.setValue(3); // p
 			bicoIrace.numDimensionsOption.setValue(dimensions);
-			algorithms.add(denstreamIrace);
-			algorithms.add(clustreeIrace);
-			algorithms.add(clustreamIrace);
-			algorithms.add(bicoIrace);
 		} else if (name.equals("covertype")) {
 			denstreamIrace.epsilonOption.setValue(0.5493); // e
 			denstreamIrace.betaOption.setValue(0.6114); // b
@@ -213,11 +202,11 @@ public class ParallelRunner {
 			bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
 			bicoIrace.numProjectionsOption.setValue(2); // p
 			bicoIrace.numDimensionsOption.setValue(dimensions);
-			algorithms.add(denstreamIrace);
-			algorithms.add(clustreeIrace);
-			algorithms.add(clustreamIrace);
-			algorithms.add(bicoIrace);
 		}
+		algorithms.add(denstreamIrace);
+		algorithms.add(clustreeIrace);
+		algorithms.add(clustreamIrace);
+		algorithms.add(bicoIrace);
 
 		// Dstream dstream = new Dstream(); // only macro
 		// algorithms.add(dstream);

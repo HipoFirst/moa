@@ -841,13 +841,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				clustreamIrace.kOption.setValue(5); // k
 				clustreamIrace.maxNumKernelsOption.setValue(100); // m
 				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				// bicoIrace.numClustersOption.setValue(); // k
-				// bicoIrace.maxNumClusterFeaturesOption.setValue(); // n
-				// bicoIrace.numProjectionsOption.setValue(); // p
-				// bicoIrace.numDimensionsOption.setValue(dimensions);
-				algorithms.add(denstreamIrace);
-				algorithms.add(clustreeIrace);
-				algorithms.add(clustreamIrace);
+				bicoIrace.numClustersOption.setValue(2); // k
+				bicoIrace.maxNumClusterFeaturesOption.setValue(36); // n
+				bicoIrace.numProjectionsOption.setValue(7); // p
+				bicoIrace.numDimensionsOption.setValue(dimensions[s]);
 			} else if (names[s].equals("sensor")) {
 				denstreamIrace.epsilonOption.setValue(0.8014); // e
 				denstreamIrace.betaOption.setValue(0.2593); // b
@@ -863,10 +860,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.maxNumClusterFeaturesOption.setValue(1880); // n
 				bicoIrace.numProjectionsOption.setValue(9); // p
 				bicoIrace.numDimensionsOption.setValue(dimensions[s]);
-				algorithms.add(denstreamIrace);
-				algorithms.add(clustreeIrace);
-				algorithms.add(clustreamIrace);
-				algorithms.add(bicoIrace);
 			} else if (names[s].equals("powersupply")) {
 				denstreamIrace.epsilonOption.setValue(0.3469); // e
 				denstreamIrace.betaOption.setValue(0.0174); // b
@@ -881,10 +874,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.numClustersOption.setValue(14); // k
 				bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
 				bicoIrace.numProjectionsOption.setValue(3); // p
-				algorithms.add(denstreamIrace);
-				algorithms.add(clustreeIrace);
-				algorithms.add(clustreamIrace);
-				algorithms.add(bicoIrace);
 			} else if (names[s].equals("covertype")) {
 				denstreamIrace.epsilonOption.setValue(0.5493); // e
 				denstreamIrace.betaOption.setValue(0.6114); // b
@@ -899,11 +888,11 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				bicoIrace.numClustersOption.setValue(16); // k
 				bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
 				bicoIrace.numProjectionsOption.setValue(2); // p
-				algorithms.add(denstreamIrace);
-				algorithms.add(clustreeIrace);
-				algorithms.add(clustreamIrace);
-				algorithms.add(bicoIrace);
 			}
+			algorithms.add(denstreamIrace);
+			algorithms.add(clustreeIrace);
+			algorithms.add(clustreamIrace);
+			algorithms.add(bicoIrace);
 
 			// // confstream without keeping the starting configuration
 			// ConfStream confstreamNoInitial = new ConfStream();
