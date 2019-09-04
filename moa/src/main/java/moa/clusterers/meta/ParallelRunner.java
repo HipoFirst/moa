@@ -27,7 +27,6 @@ import moa.evaluation.SilhouetteCoefficient;
 import moa.gui.visualization.DataPoint;
 import moa.streams.clustering.SimpleCSVStream;
 
-
 public class ParallelRunner {
 
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException, ExecutionException {
@@ -37,25 +36,25 @@ public class ParallelRunner {
 		String filename = args[2];
 		int length = Integer.parseInt(args[3]);
 		int dimensions = Integer.parseInt(args[4]);
-	
+
 		// int numberOfCores = 4;
 
-		// String name =  "RBF";
+		// String name = "RBF";
 		// String filename = "RBF_relevant.csv";
 		// int length = 2000000;
 		// int dimensions = 2;
 
-		// String name =  "sensor";
+		// String name = "sensor";
 		// String filename = "sensor_relevant_standardized.csv";
 		// int length = 2219803;
 		// int dimensions = 4;
 
-		// String name =  "powersupply";
+		// String name = "powersupply";
 		// String filename = "powersupply_relevant_standardized.csv";
 		// int length = 29928;
 		// int dimensions = 2;
 
-		// String name =  "covertype";
+		// String name = "covertype";
 		// String filename = "covertype_relevant_standardized.csv";
 		// int length = 581012;
 		// int dimensions = 10;
@@ -135,6 +134,48 @@ public class ParallelRunner {
 			algorithms.add(denstreamcRand);
 			algorithms.add(clustreamcRand);
 			algorithms.add(clustreecRand);
+		}
+
+		WithDBSCAN denstreamSSQ = new WithDBSCAN();
+		WithKmeans clustreamSSQ = new WithKmeans();
+		ClusTree clustreecSSQ = new ClusTree();
+
+		if (name.equals("sensor")) {
+			denstreamSSQ.epsilonOption.setValue(0.1168);
+			denstreamSSQ.muOption.setValue(5.5924);
+			denstreamSSQ.betaOption.setValue(0.288);
+			denstreamSSQ.lambdaOption.setValue(0.001);
+			clustreamSSQ.kernelRadiFactorOption.setValue(2);
+			clustreamSSQ.kOption.setValue(55);
+			clustreecSSQ.maxHeightOption.setValue(7);
+
+			algorithms.add(denstreamSSQ);
+			algorithms.add(clustreamSSQ);
+			algorithms.add(clustreecSSQ);
+		} else if (name.equals("covertype")) {
+			denstreamSSQ.epsilonOption.setValue(0.4105);
+			denstreamSSQ.muOption.setValue(3.5974);
+			denstreamSSQ.betaOption.setValue(0.1763);
+			denstreamSSQ.lambdaOption.setValue(0.001);
+			clustreamSSQ.kernelRadiFactorOption.setValue(2);
+			clustreamSSQ.kOption.setValue(7);
+			clustreecSSQ.maxHeightOption.setValue(7);
+
+			algorithms.add(denstreamSSQ);
+			algorithms.add(clustreamSSQ);
+			algorithms.add(clustreecSSQ);
+		} else if (name.equals("powersupply")) {
+			denstreamSSQ.epsilonOption.setValue(0.1908);
+			denstreamSSQ.muOption.setValue(1.9705);
+			denstreamSSQ.betaOption.setValue(0.3772);
+			denstreamSSQ.lambdaOption.setValue(0.001);
+			clustreamSSQ.kernelRadiFactorOption.setValue(2);
+			clustreamSSQ.kOption.setValue(24);
+			clustreecSSQ.maxHeightOption.setValue(7);
+
+			algorithms.add(denstreamSSQ);
+			algorithms.add(clustreamSSQ);
+			algorithms.add(clustreecSSQ);
 		}
 
 		WithDBSCAN denstreamIrace = new WithDBSCAN();
@@ -250,10 +291,6 @@ public class ParallelRunner {
 		// ConfStream denStreamReinit = new ConfStream();
 		// denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
 		// algorithms.add(denStreamReinit);
-
-
-
-
 
 		ForkJoinPool myPool = new ForkJoinPool(numberOfCores);
 		myPool.submit(() -> algorithms.parallelStream().forEach((algorithm) -> {
@@ -435,7 +472,8 @@ public class ParallelRunner {
 					}
 
 					if (d % 10000 == 0) {
-						System.out.println("Observation: " + d + " - Algorithm: " + algorithm.getCLICreationString(Clusterer.class));
+						System.out.println("Observation: " + d + " - Algorithm: "
+								+ algorithm.getCLICreationString(Clusterer.class));
 					}
 				}
 				resultWriter.close();

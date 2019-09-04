@@ -717,18 +717,15 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		// streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "",
-		false);
+		file.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		"sensor_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "",
-		"powersupply_relevant_standardized.csv", "", false);
+		file.csvFileOption = new FileOption("", 'z', "", "powersupply_relevant_standardized.csv", "", false);
 		streams.add(file);
 
 		file = new SimpleCSVStream();
@@ -823,6 +820,48 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 				algorithms.add(denstreamcRand);
 				algorithms.add(clustreamcRand);
 				algorithms.add(clustreecRand);
+			}
+
+			WithDBSCAN denstreamSSQ = new WithDBSCAN();
+			WithKmeans clustreamSSQ = new WithKmeans();
+			ClusTree clustreecSSQ = new ClusTree();
+
+			if (names[s].equals("sensor")) {
+				denstreamSSQ.epsilonOption.setValue(0.1168);
+				denstreamSSQ.muOption.setValue(5.5924);
+				denstreamSSQ.betaOption.setValue(0.288);
+				denstreamSSQ.lambdaOption.setValue(0.001);
+				clustreamSSQ.kernelRadiFactorOption.setValue(2);
+				clustreamSSQ.kOption.setValue(55);
+				clustreecSSQ.maxHeightOption.setValue(7);
+
+				algorithms.add(denstreamSSQ);
+				algorithms.add(clustreamSSQ);
+				algorithms.add(clustreecSSQ);
+			} else if (names[s].equals("covertype")) {
+				denstreamSSQ.epsilonOption.setValue(0.4105);
+				denstreamSSQ.muOption.setValue(3.5974);
+				denstreamSSQ.betaOption.setValue(0.1763);
+				denstreamSSQ.lambdaOption.setValue(0.001);
+				clustreamSSQ.kernelRadiFactorOption.setValue(2);
+				clustreamSSQ.kOption.setValue(7);
+				clustreecSSQ.maxHeightOption.setValue(7);
+
+				algorithms.add(denstreamSSQ);
+				algorithms.add(clustreamSSQ);
+				algorithms.add(clustreecSSQ);
+			} else if (names[s].equals("powersupply")) {
+				denstreamSSQ.epsilonOption.setValue(0.1908);
+				denstreamSSQ.muOption.setValue(1.9705);
+				denstreamSSQ.betaOption.setValue(0.3772);
+				denstreamSSQ.lambdaOption.setValue(0.001);
+				clustreamSSQ.kernelRadiFactorOption.setValue(2);
+				clustreamSSQ.kOption.setValue(24);
+				clustreecSSQ.maxHeightOption.setValue(7);
+
+				algorithms.add(denstreamSSQ);
+				algorithms.add(clustreamSSQ);
+				algorithms.add(clustreecSSQ);
 			}
 
 			WithDBSCAN denstreamIrace = new WithDBSCAN();
