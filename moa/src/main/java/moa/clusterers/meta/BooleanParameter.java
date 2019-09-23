@@ -98,7 +98,7 @@ public class BooleanParameter implements IParameter {
 		}
 
 		// update configuration
-		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map);
+		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map, true);
 		String newValue = this.range[this.numericValue];
 		if (verbose >= 3) {
 			System.out

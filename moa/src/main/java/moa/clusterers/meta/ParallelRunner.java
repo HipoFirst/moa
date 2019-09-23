@@ -454,7 +454,7 @@ public class ParallelRunner {
 								predictionWriter.print("\t" + i);
 								predictionWriter.print("\t"
 										+ confStream.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
-								predictionWriter.printf("\t%f", confStream.ensemble.get(i).silhouette);
+								predictionWriter.printf("\t%f", confStream.ensemble.get(i).performanceMeasure);
 								predictionWriter.printf("\t%f", +confStream.ensemble.get(i).prediction);
 								predictionWriter.print("\n");
 							}

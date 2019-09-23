@@ -23,7 +23,7 @@ public class Algorithm {
 	public AbstractClusterer clusterer;
 	public Attribute[] attributes;
 	public double prediction;
-	public double silhouette;
+	public double performanceMeasure;
 	public boolean preventRemoval;
 	public boolean isDefault;
 

@@ -23,7 +23,7 @@ public class ConfStreamMerge extends EnsembleClustererAbstract {
 
 		double max = Double.NEGATIVE_INFINITY;
 		double min = Double.POSITIVE_INFINITY;
-		for(double value: this.silhouettes){
+		for(double value: this.performanceMeasures){
 			if(value > max){
 				max = value;
 			}
@@ -33,8 +33,8 @@ public class ConfStreamMerge extends EnsembleClustererAbstract {
 		}
 
 		double range = max - min;
-		for (int i = 0; i < this.silhouettes.size(); i++) {
-			this.silhouettes.set(i, (this.silhouettes.get(i) - min) / (range));
+		for (int i = 0; i < this.performanceMeasures.size(); i++) {
+			this.performanceMeasures.set(i, (this.performanceMeasures.get(i) - min) / (range));
 		}
 
 		Clustering ensembleClustering = new Clustering(); // create empty clustering
@@ -50,7 +50,7 @@ public class ConfStreamMerge extends EnsembleClustererAbstract {
 			// and concatenate them to a single cluster
 			for (int j = 0; j < clusters.size(); j++) {
 				SphereCluster clstr = (SphereCluster) clusters.get(j); // TODO are there only SphereCluster?
-				clstr.setWeight(clstr.getWeight() * this.silhouettes.get(i));
+				clstr.setWeight(clstr.getWeight() * this.performanceMeasures.get(i));
 				ensembleClustering.add(clstr);
 			}
 		}

@@ -13,6 +13,8 @@
 	"lambda": 0.05, 								// fading parameter for reduction of  standard deviation
 	"resetProbability": 0.01,						// reset probability for standard deviation or probability vector
 	"numberOfCores": 1,								// number of cores for parallel training (-1 for all available cores)
+	"performanceMeasure": "SilhouetteCoefficient",	// evaluation measure for clustering quality
+	"performanceMeasureMaximisation": "true", 		// whether evaluation measure should be maximised
 	"algorithms": [
 		{
 			"algorithm": "denstream.WithDBSCAN",
@@ -51,7 +53,7 @@
 				{"parameter": "k", "type":"integer", "value":5, "range":[2, 20]},
 				{"parameter": "n", "type":"integer", "value":1000, "range":[1,2000]},
 				{"parameter": "p", "type":"integer", "value":10, "range":[1,20]},
-				{"parameter": "d", "type":"integer", "value":10, "optimise":"true"}
+				{"parameter": "d", "type":"integer", "value":10, "optimise":"false"}
 			]
 		}
 		// ,

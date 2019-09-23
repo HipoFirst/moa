@@ -91,7 +91,7 @@ public class CategoricalParameter implements IParameter {
 			map.put(i, this.probabilities.get(i));
 		}
 		// update configuration
-		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map);
+		this.numericValue = EnsembleClustererAbstract.sampleProportionally(map, true);
 		String newValue = this.range[this.numericValue];
 
 		if (verbose >= 3) {
