@@ -1,5 +1,5 @@
 /*
- *   AdaptiveRandomForestTest.java
+ *   StreamingRandomPatchesTest.java
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,15 +24,14 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import moa.classifiers.AbstractMultipleClassifierTestCase;
 import moa.classifiers.Classifier;
-import static moa.test.MoaTestCase.runTest;
 
 /**
- * Tests the AdaptiveRandomForest classifier.
+ * Tests the StreamingRandomPatches classifier.
  * 
- * @author  Heitor Murilo Gomes (heitor_murilo_gomes at yahoo dot com dot br)
+ * @author  Heitor Murilo Gomes (heitor dot gomes at waikato dot ac dot nz)
  * @version $Revision$
  */
-public class AdaptiveRandomForestTest
+public class StreamingRandomPatchesTest
   extends AbstractMultipleClassifierTestCase {
 
   /**
@@ -40,7 +39,7 @@ public class AdaptiveRandomForestTest
    *
    * @param name 	the name of the test
    */
-  public AdaptiveRandomForestTest(String name) {
+  public StreamingRandomPatchesTest(String name) {
     super(name);
     this.setNumberTests(1);
   }
@@ -52,13 +51,13 @@ public class AdaptiveRandomForestTest
    */
   @Override
   protected Classifier[] getRegressionClassifierSetups() {
-    AdaptiveRandomForest ARFTest = new AdaptiveRandomForest();
-    ARFTest.ensembleSizeOption.setValue(5);
-    ARFTest.mFeaturesModeOption.setChosenIndex(0);
-    ARFTest.mFeaturesPerTreeSizeOption.setValue(2);
+    StreamingRandomPatches SRPTest = new StreamingRandomPatches();
+    SRPTest.ensembleSizeOption.setValue(5);
+    SRPTest.subspaceModeOption.setChosenIndex(0);
+    SRPTest.subspaceSizeOption.setValue(2);
 
     return new Classifier[]{
-            ARFTest,
+            SRPTest,
     };
   }
   
@@ -68,7 +67,7 @@ public class AdaptiveRandomForestTest
    * @return		the test suite
    */
   public static Test suite() {
-    return new TestSuite(AdaptiveRandomForestTest.class);
+    return new TestSuite(StreamingRandomPatchesTest.class);
   }
 
   /**
