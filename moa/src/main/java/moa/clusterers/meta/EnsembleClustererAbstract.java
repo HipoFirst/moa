@@ -20,6 +20,7 @@ import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
 import moa.classifiers.meta.AdaptiveRandomForestRegressor;
+import moa.cluster.Cluster;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
@@ -29,6 +30,7 @@ import moa.clusterers.denstream.WithDBSCAN;
 import moa.clusterers.dstream.Dstream;
 import moa.clusterers.kmeanspm.BICO;
 import moa.clusterers.streamkm.StreamKM;
+import moa.core.AutoExpandVector;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.MeasureCollection;
@@ -103,7 +105,6 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 	int verbose = 0;
 	protected ExecutorService executor;
 	int numberOfCores;
-
 
 	// the file option dialogue in the UI
 	public FileOption fileOption = new FileOption("ConfigurationFile", 'f', "Configuration file in json format.",
@@ -354,7 +355,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 					return;
 				}
 
-				int replaceIdx = EnsembleClustererAbstract.sampleProportionally(replace, !this.settings.performanceMeasureMaximisation); // false
+				int replaceIdx = EnsembleClustererAbstract.sampleProportionally(replace,
+						!this.settings.performanceMeasureMaximisation); // false
 
 				if (this.verbose >= 1) {
 					System.out.println("Promote " + newAlgorithm.clusterer.getCLICreationString(Clusterer.class)
@@ -482,7 +484,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 						return;
 					}
 
-					int replaceIdx = EnsembleClustererAbstract.sampleProportionally(replace, !this.settings.performanceMeasureMaximisation); // false
+					int replaceIdx = EnsembleClustererAbstract.sampleProportionally(replace,
+							!this.settings.performanceMeasureMaximisation); // false
 
 					if (this.verbose >= 1) {
 						System.out.println("Replace algorithm: " + replaceIdx);
@@ -506,7 +509,8 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		for (int i = 0; i < silhs.size(); i++) {
 			parents.put(i, silhs.get(i));
 		}
-		int parentIdx = EnsembleClustererAbstract.sampleProportionally(parents, this.settings.performanceMeasureMaximisation); // true
+		int parentIdx = EnsembleClustererAbstract.sampleProportionally(parents,
+				this.settings.performanceMeasureMaximisation); // true
 
 		return parentIdx;
 	}
@@ -579,12 +583,10 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 		return (min);
 	}
 
-
-
 	static int sampleProportionally(HashMap<Integer, Double> values, boolean maximisation) {
 
 		// if we want to sample lower values with higher probability, we invert here
-		if(!maximisation){
+		if (!maximisation) {
 			HashMap<Integer, Double> vals = new HashMap<Integer, Double>(values.size());
 
 			for (int i : values.keySet()) {
@@ -705,455 +707,22 @@ public abstract class EnsembleClustererAbstract extends AbstractClusterer {
 
 	public static void main(String[] args) throws Exception {
 
-		ArrayList<ClusteringStream> streams = new ArrayList<ClusteringStream>();
-		SimpleCSVStream file;
-
-		// String filename = args[0];
-		// int length = Integer.parseInt(args[1]);
-		// String name = args[2];
-		// int dimension = Integer.parseInt(args[3]);
-		// file = new SimpleCSVStream();
-		// file.csvFileOption = new FileOption("", 'z', "", filename, "", false);
-		// streams.add(file);
-
-		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "RBF_relevant.csv", "", false);
-		streams.add(file);
-
-		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "sensor_relevant_standardized.csv", "", false);
-		streams.add(file);
-
-		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "powersupply_relevant_standardized.csv", "", false);
-		streams.add(file);
-
-		file = new SimpleCSVStream();
-		file.csvFileOption = new FileOption("", 'z', "", "covertype_relevant_standardized.csv", "", false);
-		streams.add(file);
-
-		int[] lengths = { 2000000, 2219803, 29928, 581012 };
-		String[] names = { "RBF", "sensor", "powersupply", "covertype" };
-		int[] dimensions = { 2, 4, 2, 10 };
-
-		int windowSize = 1000;
-
-		for (int s = 0; s < streams.size(); s++) {
-
-			ArrayList<AbstractClusterer> algorithms = new ArrayList<AbstractClusterer>();
-
-			// run confstream algorithm
-			ConfStream confstream = new ConfStream();
-			confstream.fileOption.setValue("settings_confStream.json");
-			algorithms.add(confstream);
-
-			// compare to individual algorithms
-			WithDBSCAN denstream = new WithDBSCAN();
-			algorithms.add(denstream);
-
-			ClusTree clustree = new ClusTree();
-			algorithms.add(clustree);
-
-			WithKmeans clustream = new WithKmeans();
-			algorithms.add(clustream);
-
-			BICO bico = new BICO();
-			bico.numDimensionsOption.setValue(dimensions[s]);
-			algorithms.add(bico);
-
-			// Dstream dstream = new Dstream(); // only macro
-			// algorithms.add(dstream);
-
-			// StreamKM streamkm = new StreamKM(); // only macro
-			// streamkm.lengthOption.setValue(lengths[s]);
-			// algorithms.add(streamkm);
-
-			// confstream with predictor
-			ConfStream confstreamusePredictor = new ConfStream();
-			confstreamusePredictor.fileOption.setValue("settings_confStream_usePredictor.json");
-			algorithms.add(confstreamusePredictor);
-
-			// run confstream only on single algorithms
-			ConfStream confstreamDenstream = new ConfStream();
-			confstreamDenstream.fileOption.setValue("settings_denstream.json");
-			algorithms.add(confstreamDenstream);
-
-			ConfStream confstreamClustree = new ConfStream();
-			confstreamClustree.fileOption.setValue("settings_clustree.json");
-			algorithms.add(confstreamClustree);
-
-			ConfStream confstreamClustream = new ConfStream();
-			confstreamClustream.fileOption.setValue("settings_clustream.json");
-			algorithms.add(confstreamClustream);
-
-			ConfStream confstreamBico = new ConfStream();
-			confstreamBico.fileOption.setValue("settings_bico.json");
-			algorithms.add(confstreamBico);
-
-			// run algorithms with already optimised parameters
-			WithDBSCAN denstreamcRand = new WithDBSCAN();
-			WithKmeans clustreamcRand = new WithKmeans();
-			ClusTree clustreecRand = new ClusTree();
-
-			if (names[s].equals("sensor")) {
-				denstreamcRand.epsilonOption.setValue(0.02);
-				denstreamcRand.muOption.setValue(2.78);
-				denstreamcRand.betaOption.setValue(0.69);
-				denstreamcRand.lambdaOption.setValue(0.001);
-				clustreamcRand.kernelRadiFactorOption.setValue(7);
-				clustreamcRand.kOption.setValue(55);
-				clustreecRand.maxHeightOption.setValue(9);
-
-				algorithms.add(denstreamcRand);
-				algorithms.add(clustreamcRand);
-				algorithms.add(clustreecRand);
-
-			} else if (names[s].equals("covertype")) {
-				denstreamcRand.epsilonOption.setValue(0.42);
-				denstreamcRand.muOption.setValue(2.51);
-				denstreamcRand.betaOption.setValue(0.33);
-				denstreamcRand.lambdaOption.setValue(0.001);
-				clustreamcRand.kernelRadiFactorOption.setValue(3);
-				clustreamcRand.kOption.setValue(7);
-				clustreecRand.maxHeightOption.setValue(6);
-
-				algorithms.add(denstreamcRand);
-				algorithms.add(clustreamcRand);
-				algorithms.add(clustreecRand);
-			}
-
-			WithDBSCAN denstreamSSQ = new WithDBSCAN();
-			WithKmeans clustreamSSQ = new WithKmeans();
-			ClusTree clustreecSSQ = new ClusTree();
-
-			if (names[s].equals("sensor")) {
-				denstreamSSQ.epsilonOption.setValue(0.1168);
-				denstreamSSQ.muOption.setValue(5.5924);
-				denstreamSSQ.betaOption.setValue(0.288);
-				denstreamSSQ.lambdaOption.setValue(0.001);
-				clustreamSSQ.kernelRadiFactorOption.setValue(2);
-				clustreamSSQ.kOption.setValue(55);
-				clustreecSSQ.maxHeightOption.setValue(7);
-
-				algorithms.add(denstreamSSQ);
-				algorithms.add(clustreamSSQ);
-				algorithms.add(clustreecSSQ);
-			} else if (names[s].equals("covertype")) {
-				denstreamSSQ.epsilonOption.setValue(0.4105);
-				denstreamSSQ.muOption.setValue(3.5974);
-				denstreamSSQ.betaOption.setValue(0.1763);
-				denstreamSSQ.lambdaOption.setValue(0.001);
-				clustreamSSQ.kernelRadiFactorOption.setValue(2);
-				clustreamSSQ.kOption.setValue(7);
-				clustreecSSQ.maxHeightOption.setValue(7);
-
-				algorithms.add(denstreamSSQ);
-				algorithms.add(clustreamSSQ);
-				algorithms.add(clustreecSSQ);
-			} else if (names[s].equals("powersupply")) {
-				denstreamSSQ.epsilonOption.setValue(0.1908);
-				denstreamSSQ.muOption.setValue(1.9705);
-				denstreamSSQ.betaOption.setValue(0.3772);
-				denstreamSSQ.lambdaOption.setValue(0.001);
-				clustreamSSQ.kernelRadiFactorOption.setValue(2);
-				clustreamSSQ.kOption.setValue(24);
-				clustreecSSQ.maxHeightOption.setValue(7);
-
-				algorithms.add(denstreamSSQ);
-				algorithms.add(clustreamSSQ);
-				algorithms.add(clustreecSSQ);
-			}
-
-			WithDBSCAN denstreamIrace = new WithDBSCAN();
-			ClusTree clustreeIrace = new ClusTree();
-			WithKmeans clustreamIrace = new WithKmeans();
-			BICO bicoIrace = new BICO();
-
-			if (names[s].equals("RBF")) {
-				denstreamIrace.epsilonOption.setValue(0.0757); // e
-				denstreamIrace.betaOption.setValue(0.3205); // b
-				denstreamIrace.muOption.setValue(2913.1242); // m
-				denstreamIrace.offlineOption.setValue(16.489); // o
-				denstreamIrace.lambdaOption.setValue(0.1037); // l
-				clustreeIrace.maxHeightOption.setValue(8); // H
-				clustreeIrace.breadthFirstStrategyOption.setValue(false); // B
-				clustreamIrace.kOption.setValue(5); // k
-				clustreamIrace.maxNumKernelsOption.setValue(100); // m
-				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				bicoIrace.numClustersOption.setValue(2); // k
-				bicoIrace.maxNumClusterFeaturesOption.setValue(36); // n
-				bicoIrace.numProjectionsOption.setValue(7); // p
-				bicoIrace.numDimensionsOption.setValue(dimensions[s]);
-			} else if (names[s].equals("sensor")) {
-				denstreamIrace.epsilonOption.setValue(0.8014); // e
-				denstreamIrace.betaOption.setValue(0.2593); // b
-				denstreamIrace.muOption.setValue(9085.1493); // m
-				denstreamIrace.offlineOption.setValue(7.0789); // o
-				denstreamIrace.lambdaOption.setValue(0.0744); // l
-				clustreeIrace.maxHeightOption.setValue(3); // H
-				clustreeIrace.breadthFirstStrategyOption.setValue(true); // B
-				clustreamIrace.kOption.setValue(8); // k
-				clustreamIrace.maxNumKernelsOption.setValue(98); // m
-				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				bicoIrace.numClustersOption.setValue(6); // k
-				bicoIrace.maxNumClusterFeaturesOption.setValue(1880); // n
-				bicoIrace.numProjectionsOption.setValue(9); // p
-				bicoIrace.numDimensionsOption.setValue(dimensions[s]);
-			} else if (names[s].equals("powersupply")) {
-				denstreamIrace.epsilonOption.setValue(0.3469); // e
-				denstreamIrace.betaOption.setValue(0.0174); // b
-				denstreamIrace.muOption.setValue(4027.0768); // m
-				denstreamIrace.offlineOption.setValue(7.5439); // o
-				denstreamIrace.lambdaOption.setValue(0.8842); // l
-				clustreeIrace.maxHeightOption.setValue(1); // H
-				clustreeIrace.breadthFirstStrategyOption.setValue(true); // B
-				clustreamIrace.kOption.setValue(5); // k
-				clustreamIrace.maxNumKernelsOption.setValue(200); // m
-				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				bicoIrace.numClustersOption.setValue(14); // k
-				bicoIrace.maxNumClusterFeaturesOption.setValue(53); // n
-				bicoIrace.numProjectionsOption.setValue(3); // p
-			} else if (names[s].equals("covertype")) {
-				denstreamIrace.epsilonOption.setValue(0.5493); // e
-				denstreamIrace.betaOption.setValue(0.6114); // b
-				denstreamIrace.muOption.setValue(282.3994); // m
-				denstreamIrace.offlineOption.setValue(3.3658); // o
-				denstreamIrace.lambdaOption.setValue(0.1069); // l
-				clustreeIrace.maxHeightOption.setValue(1); // H
-				clustreeIrace.breadthFirstStrategyOption.setValue(true); // B
-				clustreamIrace.kOption.setValue(3); // k
-				clustreamIrace.maxNumKernelsOption.setValue(4); // m
-				clustreamIrace.kernelRadiFactorOption.setValue(2); // t
-				bicoIrace.numClustersOption.setValue(16); // k
-				bicoIrace.maxNumClusterFeaturesOption.setValue(637); // n
-				bicoIrace.numProjectionsOption.setValue(2); // p
-			}
-			algorithms.add(denstreamIrace);
-			algorithms.add(clustreeIrace);
-			algorithms.add(clustreamIrace);
-			algorithms.add(bicoIrace);
-
-			// // confstream without keeping the starting configuration
-			// ConfStream confstreamNoInitial = new ConfStream();
-			// confstreamNoInitial.fileOption.setValue("settings_confStream_noInitial.json");
-			// algorithms.add(confstreamNoInitial);
-
-			// // confstream without keeping the starting configuration or the algorithm
-			// // incumbent or the overall incumbent
-			// ConfStream confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial = new
-			// ConfStream();
-			// confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial.fileOption
-			// .setValue("settings_confStream_noIncumbentAndAlgorithmIncumbentsAndInitial.json");
-			// algorithms.add(confstreamNoIncumbentAndAlgorithmIncumbentsAndInitial);
-
-			// // no algorithm incumbent, no default
-			// ConfStream confstreamNoAlgorithmIncumbentsAndDefault = new ConfStream();
-			// confstreamNoAlgorithmIncumbentsAndDefault.fileOption
-			// .setValue("settings_confStream_noAlgorithmIncumbentsAndInitial.json");
-			// algorithms.add(confstreamNoAlgorithmIncumbentsAndDefault);
-
-			// // compare on-the-fly adaption to reinitialisation with micro to reset
-			// ConfStream confStreamReinit = new ConfStream();
-			// confStreamReinit.fileOption.setValue("settings_confStream_reinitialiseModel.json");
-			// algorithms.add(confStreamReinit);
-
-			// ConfStream confStreamReset = new ConfStream();
-			// confStreamReset.fileOption.setValue("settings_confStream_resetModel.json");
-			// algorithms.add(confStreamReset);
-
-			// ConfStream denStreamNoReinit = new ConfStream();
-			// denStreamNoReinit.fileOption.setValue("settings_denstream_reinitialiseModel.json");
-			// algorithms.add(denStreamNoReinit);
-
-			// ConfStream denStreamReinit = new ConfStream();
-			// denStreamReinit.fileOption.setValue("settings_denstream_resetModel.json");
-			// algorithms.add(denStreamReinit);
-
-			System.out.println("Stream: " + names[s]);
-			streams.get(s).prepareForUse();
-			streams.get(s).restart();
-
-			for (int a = 0; a < algorithms.size(); a++) {
-				System.out.println("Algorithm: " + algorithms.get(a).getCLICreationString(Clusterer.class));
-
-				algorithms.get(a).prepareForUse();
-
-				// TODO these are super ugly special cases
-				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
-					for (Algorithm alg : confStream.ensemble) {
-						for (IParameter param : alg.parameters) {
-							if (alg.clusterer instanceof StreamKM && param.getParameter().equals("l")) {
-								IntegerParameter integerParam = (IntegerParameter) param;
-								integerParam.setValue(lengths[s]);
-							}
-							if (alg.clusterer instanceof BICO && param.getParameter().equals("d")) {
-								IntegerParameter integerParam = (IntegerParameter) param;
-								integerParam.setValue(dimensions[s]);
-							}
-						}
-					}
-				}
-				algorithms.get(a).resetLearningImpl();
-				streams.get(s).restart();
-
-				File resultFile = new File(
-						names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + ".txt");
-				PrintWriter resultWriter = new PrintWriter(resultFile);
-
-				PrintWriter ensembleWriter = null;
-				PrintWriter predictionWriter = null;
-
-				// header of proportion file
-				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-
-					EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
-
-					// init prediction for ensemble algorithms writer
-					File ensembleFile = new File(
-							names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_ensemble.txt");
-					ensembleWriter = new PrintWriter(ensembleFile);
-
-					ensembleWriter.println("points\tidx\tAlgorithm");
-
-					for (int i = 0; i < confStream.ensemble.size(); i++) {
-						ensembleWriter.print(0);
-						ensembleWriter.print("\t" + i);
-						ensembleWriter.println("\t" + confStream.ensemble.get(i).algorithm);
-					}
-					ensembleWriter.flush();
-
-					// init writer for individual prediction comparison
-					File predictionFile = new File(names[s] + "_"
-							+ algorithms.get(a).getCLICreationString(Clusterer.class) + "_prediction.txt");
-					predictionWriter = new PrintWriter(predictionFile);
-					predictionWriter.println("points\tidx\talgorithm\tsilhouette\tprediction");
-				}
-
-				// header of result file
-				resultWriter.println("points\tsilhouette");
-
-				ArrayList<DataPoint> windowPoints = new ArrayList<DataPoint>(windowSize);
-				// ArrayList<Instance> windowInstances = new ArrayList<Instance>(windowSize);
-				for (int d = 1; d < lengths[s]; d++) {
-					Instance inst = streams.get(s).nextInstance().getData();
-
-					// apparently numAttributes is the class index when no class exists
-					if (inst.classIndex() < inst.numAttributes()) {
-						inst.deleteAttributeAt(inst.classIndex()); // remove class label
-					}
-					DataPoint point = new DataPoint(inst, d);
-					windowPoints.add(point);
-					// windowInstances.add(inst);
-					algorithms.get(a).trainOnInstanceImpl(inst);
-
-					// if (d % windowSize == 0 && d != windowSize) {
-					if (d % windowSize == 0) {
-
-						SilhouetteCoefficient silh = new SilhouetteCoefficient();
-
-						Clustering result = null;
-						boolean evaluateMacro = false;
-
-						// compare micro-clusters
-						if (!evaluateMacro) {
-							result = algorithms.get(a).getMicroClusteringResult();
-						}
-						// compare macro-clusters
-						if (evaluateMacro || result == null) {
-							result = algorithms.get(a).getClusteringResult();
-						}
-
-						resultWriter.print(d);
-						resultWriter.print("\t");
-
-						if (result == null) {
-							resultWriter.print("nan");
-						} else {
-							silh.evaluateClusteringPerformance(result, null, windowPoints);
-
-							if (result.size() == 0 || result.size() == 1) {
-								resultWriter.print("nan");
-							} else {
-								resultWriter.printf("%f", silh.getLastValue(0));
-							}
-						}
-						resultWriter.print("\n");
-
-						if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-							EnsembleClustererAbstract confStream = (EnsembleClustererAbstract) algorithms.get(a);
-							Algorithm alg = confStream.ensemble.get(confStream.bestModel);
-
-							File paramFile = new File(
-									names[s] + "_" + algorithms.get(a).getCLICreationString(Clusterer.class) + "_"
-											+ alg.algorithm + ".txt");
-
-							PrintWriter paramWriter = new PrintWriter(new FileOutputStream(paramFile, true)); // append
-
-							// add header to param file
-							try {
-								BufferedReader br = new BufferedReader(new FileReader(paramFile));
-								if (br.readLine() == null) {
-									paramWriter.print("points\tsilhouette");
-									for (int p = 0; p < alg.parameters.length; p++) {
-										paramWriter.print("\t" + alg.parameters[p].getParameter());
-									}
-									paramWriter.print("\n");
-								}
-								br.close();
-							} catch (IOException e) {
-							}
-
-							// add param values
-							paramWriter.print(d);
-							paramWriter.printf("\t%f", silh.getLastValue(0));
-							for (int p = 0; p < alg.parameters.length; p++) {
-								paramWriter.print("\t" + alg.parameters[p].getValue());
-							}
-							paramWriter.print("\n");
-							paramWriter.close();
-
-							// ensemble compositions
-							for (int i = 0; i < confStream.ensemble.size(); i++) {
-								ensembleWriter.print(d);
-								ensembleWriter.print("\t" + i);
-								ensembleWriter.println("\t" + confStream.ensemble.get(i).algorithm);
-							}
-							ensembleWriter.flush();
-
-							for (int i = 0; i < confStream.ensemble.size(); i++) {
-								predictionWriter.print(d);
-								predictionWriter.print("\t" + i);
-								predictionWriter.print("\t"
-										+ confStream.ensemble.get(i).clusterer.getCLICreationString(Clusterer.class));
-								predictionWriter.printf("\t%f", confStream.ensemble.get(i).performanceMeasure);
-								predictionWriter.printf("\t%f", +confStream.ensemble.get(i).prediction);
-								predictionWriter.print("\n");
-							}
-							predictionWriter.flush();
-						}
-
-						// // then train
-						// for(Instance inst2 : windowInstances){
-						// algorithms.get(a).trainOnInstanceImpl(inst2);
-						// }
-
-						// windowInstances.clear();
-						windowPoints.clear();
-						resultWriter.flush();
-					}
-
-					if (d % 10000 == 0) {
-						System.out.println("Observation: " + d);
-					}
-				}
-				resultWriter.close();
-				if (algorithms.get(a) instanceof EnsembleClustererAbstract) {
-					ensembleWriter.close();
-					predictionWriter.close();
-				}
-			}
-
+		// create a stream
+		RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
+		stream.prepareForUse();
+
+		// create confStream algorithm
+		ConfStream confStream = new ConfStream();
+		confStream.fileOption.setValue(System.getProperty("user.dir") + "/moa/src/main/java/moa/clusterers/meta/settings.json");
+		confStream.prepareForUse();
+
+		// train the algorithm
+		for (int i = 1; i < 5000; i++) {
+			Instance inst = stream.nextInstance().getData();
+			confStream.trainOnInstanceImpl(inst);
 		}
+
+		// get micro clusters
+		Clustering micro = confStream.getMicroClusteringResult();
 	}
 }
