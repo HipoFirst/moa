@@ -1,0 +1,28 @@
+{
+	"windowSize": 1000,
+	"ensembleSize": 20,
+	"newConfigurations": 10,
+	"keepCurrentModel": "true",
+	"reinitialiseWithClusters" : "true",
+	"preventAlgorithmDeath": "true",
+	"evaluateMacro": "false",
+	"keepGlobalIncumbent": "true",
+	"keepAlgorithmIncumbents": "true",
+	"keepInitialConfigurations": "true",
+	"useTestEnsemble": "true",
+	"lambda": 0.05,
+	"resetProbability": 0.01,
+	"numberOfCores": 1,
+	"algorithms": [
+		{
+			"algorithm": "denstream.WithDBSCAN",
+			"parameters": [
+				{"parameter": "e", "type":"numeric", "value":0.02, "range":[0,1]},
+				{"parameter": "b", "type":"numeric", "value":0.2, "range":[0,1]},
+				{"parameter": "m", "type":"integer", "value":1, "range":[0,10000]},
+				{"parameter": "o", "type":"integer", "value":2, "range":[2,20]},
+				{"parameter": "l", "type":"numeric", "value":0.25, "range":[0,1]}
+			]
+		}
+	]
+}
