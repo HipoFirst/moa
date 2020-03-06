@@ -1,12 +1,8 @@
 package moa.clusterers.meta;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -20,26 +16,15 @@ import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
 import moa.classifiers.meta.AdaptiveRandomForestRegressor;
-import moa.cluster.Cluster;
 import moa.cluster.Clustering;
 import moa.clusterers.AbstractClusterer;
 import moa.clusterers.Clusterer;
-import moa.clusterers.clustream.WithKmeans;
-import moa.clusterers.clustree.ClusTree;
-import moa.clusterers.denstream.WithDBSCAN;
-import moa.clusterers.dstream.Dstream;
-import moa.clusterers.kmeanspm.BICO;
-import moa.clusterers.streamkm.StreamKM;
-import moa.core.AutoExpandVector;
 import moa.core.Measurement;
 import moa.core.ObjectRepository;
 import moa.evaluation.MeasureCollection;
-import moa.evaluation.SilhouetteCoefficient;
 import moa.gui.visualization.DataPoint;
 import moa.options.ClassOption;
-import moa.streams.clustering.ClusteringStream;
 import moa.streams.clustering.RandomRBFGeneratorEvents;
-import moa.streams.clustering.SimpleCSVStream;
 import moa.tasks.TaskMonitor;
 
 // The main flow is as follow:
